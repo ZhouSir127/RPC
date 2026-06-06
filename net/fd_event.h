@@ -27,7 +27,7 @@ class FdEvent {
   const epoll_event& getEpollEvent() const{ return m_listen_events; }
 
  protected:
-  int m_fd;
+  const int m_fd;
 
   epoll_event m_listen_events;
 

@@ -5,13 +5,12 @@
 #include <queue>
 #include <memory>
 #include <semaphore.h>
+#include <mutex>
 
 #include "config.h"
-#include "mutex.h"
 #include "../net/timer_event.h"
 
 namespace rocket {
-
 
 template<typename... Args>
 std::string formatString(const char* str, Args&&... args) {
@@ -119,7 +118,7 @@ class AsyncLogger {
   sem_t m_sempahore;
 
   pthread_cond_t m_condtion;  // 条件变量
-  Mutex m_mutex;
+  std::mutex m_mutex;
 
   std::string m_date;   // 当前打印日志的文件日期
   FILE* m_file_hanlder {NULL};   // 当前打开的日志文件句柄
@@ -173,9 +172,9 @@ class Logger {
 
   std::vector<std::string> m_app_buffer;
 
-  Mutex m_mutex;
+  std::mutex m_mutex;
 
-  Mutex m_app_mutex;
+  std::mutex m_app_mutex;
 
   // m_file_path/m_file_name_yyyymmdd.1
 

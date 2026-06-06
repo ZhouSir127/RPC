@@ -2,12 +2,11 @@
 #define ROCKET_NET_TIMER_H
 
 #include <map>
-#include "../common/mutex.h"
+#include <mutex>
 #include "fd_event.h"
 #include "timer_event.h"
 
 namespace rocket {
-
 class Timer : public FdEvent {
  public:
 
@@ -26,8 +25,7 @@ class Timer : public FdEvent {
 
  private:
   std::multimap<int64_t, TimerEvent::s_ptr> m_pending_events;
-  Mutex m_mutex;
-
+  std::mutex m_mutex;
 };
 
 }

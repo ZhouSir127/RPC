@@ -2,10 +2,8 @@
 #define ROCKET_NET_IO_THREAD_GROUP_H
 
 #include <vector>
-#include "rocket/common/log.h"
-#include "rocket/net/io_thread.h"
-
-
+#include "../common/log.h"
+#include "io_thread.h"
 
 namespace rocket {
 
@@ -28,7 +26,6 @@ class IOThreadGroup {
   std::vector<IOThread*> m_io_thread_groups;
 
   int m_index {0};
-
 };
 
 }
