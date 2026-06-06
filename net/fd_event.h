@@ -24,7 +24,7 @@ class FdEvent {
   void cancel(TriggerEvent event_type);
 
   int getFd() const { return m_fd; }
-  const epoll_event& getEpollEvent() const{ return m_listen_events; }
+  epoll_event* getEpollEvent() { return &m_listen_events; }
 
  protected:
   const int m_fd;

@@ -63,13 +63,13 @@ void EventLoop::initWakeUpFdEvent() {
   m_wakeup_fd_event = std::make_unique<WakeUpFdEvent>(m_wakeup_fd);
 
   m_wakeup_fd_event->setCallback(EPOLLIN, [this]() {
-    uint64_t val; // eventfd 标准读取类型
-    while (read(m_wakeup_fd, &val, sizeof(val)) != -1 && errno != EAGAIN) {
-    }
-    DEBUGLOG("read full bytes from wakeup fd[%d]", m_wakeup_fd);
+    uint64_t val;
+    uint64_t dummy;
+    if (read(m_wakeup_fd, &dummy, sizeof(dummy)) == -1 && errno != EAGAIN)
+      DEBUGLOG("read full bytes from wakeup fd[%d]", m_wakeup_fd);
   });
 
-  addEpollEvent(m_wakeup_fd_event.get());
+  addEpollEventTask(m_wakeup_fd_event.get() );
 }
 
 void EventLoop::loop() {
@@ -129,7 +129,7 @@ void EventLoop::loop() {
   m_is_looping = false;
 }
 
-void EventLoop::wakeup() {
+inline void EventLoop::wakeup() {
   INFOLOG("WAKE UP");
   m_wakeup_fd_event->wakeup();
 }
@@ -139,22 +139,20 @@ void EventLoop::stop() {
   wakeup();
 }
 
-// -----------------------------------------------------
-// 替代原本复杂的宏定义，变为私有内联成员函数
-// -----------------------------------------------------
-void EventLoop::addEpollEventTask(FdEvent* event) {
-  auto it = m_listen_fds.find(event->getFd());
-  int op = (it != m_listen_fds.end()) ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
+inline void EventLoop::addEpollEventTask(FdEvent* fdEvent) {
+  int op = EPOLL_CTL_MOD,fd = fdEvent -> getFd();
+  
+  if (m_listen_fds.find(fd) == m_listen_fds.end() ){ 
+    op = EPOLL_CTL_ADD ;
+    m_listen_fds.insert(fd);
+  }
 
-  epoll_event tmp = event->getEpollEvent();
-  INFOLOG("epoll_event.events = %d", (int)tmp.events);
-
-  int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), &tmp);
-  if (rt == -1) {
+  int rt = epoll_ctl(m_epoll_fd, op, fd , fdEvent->getEpollEvent() );
+  
+  if (rt == -1){
     ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno));
-  } else {
-    m_listen_fds.insert(event->getFd());
-    DEBUGLOG("add event success, fd[%d]", event->getFd());
+  }else{ 
+    DEBUGLOG("add event success, fd[%d]", fd);
   }
 }
 
@@ -173,19 +171,17 @@ void EventLoop::deleteEpollEventTask(FdEvent* event) {
   }
 }
 
-// -----------------------------------------------------
-
-void EventLoop::addEpollEvent(FdEvent* event) {
-  if (isInLoopThread()) {
-    addEpollEventTask(event);
-  } else {
-    auto cb = [this, event]() { addEpollEventTask(event); };
+void EventLoop::addEpollEvent(FdEvent* fdEvent) {
+  if (std::this_thread::get_id() == m_thread_id)
+    addEpollEventTask(fdEvent);
+  else  {
+    auto cb = [this, fdEvent]() { addEpollEventTask(fdEvent); };
     addTask(cb, true);
   }
 }
 
 void EventLoop::deleteEpollEvent(FdEvent* event) {
-  if (isInLoopThread()) {
+  if (std::this_thread::get_id() == m_thread_id) {
     deleteEpollEventTask(event);
   } else {
     auto cb = [this, event]() { deleteEpollEventTask(event); };
@@ -202,10 +198,6 @@ void EventLoop::addTask(std::function<void()> cb, bool is_wake_up /*=false*/) {
   if (is_wake_up) {
     wakeup();
   }
-}
-
-bool EventLoop::isInLoopThread() const {
-  return std::this_thread::get_id() == m_thread_id;
 }
 
 bool EventLoop::isLooping() const {

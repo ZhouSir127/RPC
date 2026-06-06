@@ -1,7 +1,7 @@
 #ifndef ROCKET_NET_EVENTLOOP_H
 #define ROCKET_NET_EVENTLOOP_H
 
-#include <set>
+#include <unordered_set>
 #include <functional>
 #include <queue>
 #include <mutex>
@@ -31,7 +31,6 @@ class EventLoop {
   void addEpollEvent(FdEvent* event);
   void deleteEpollEvent(FdEvent* event);
 
-  bool isInLoopThread() const;
   void addTask(std::function<void()> cb, bool is_wake_up = false);
   void addTimerEvent(TimerEvent::s_ptr event);
   bool isLooping() const;
@@ -57,7 +56,7 @@ class EventLoop {
   bool m_stop_flag {false};
   bool m_is_looping {false};
 
-  std::set<int> m_listen_fds;
+  std::unordered_set<int> m_listen_fds;
 
   std::queue<std::function<void()>> m_pending_tasks;
   mutable std::mutex m_mutex;
