@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <thread>
 #include <sstream>
+#include <sys/timerfd.h>
 #include "eventloop.h"
 #include "../common/log.h"
 #include "../common/util.h"
@@ -19,23 +20,57 @@ EventLoop& EventLoop::GetCurrentEventLoop() {
   return instance;
 }
 
+inline void EventLoop::add(FdEvent* fdEvent) {
+  int fd = fdEvent -> getFd();
+  m_listen_fds.insert(fd);
+  
+  int rt = epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD , fd , fdEvent->getEpollEvent() );
+  
+  if (rt == -1){
+    ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno));
+  }else{ 
+    DEBUGLOG("add event success, fd[%d]", fd);
+  }
+}
+
+inline void EventLoop::modify(FdEvent* fdEvent){
+  int fd = fdEvent -> getFd();
+  
+  int rt = epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD , fd , fdEvent->getEpollEvent() );
+  
+  if (rt == -1){
+    ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno));
+  }else{ 
+    DEBUGLOG("add event success, fd[%d]", fd);
+  }
+}
+
 EventLoop::EventLoop() 
     : m_thread_id(std::this_thread::get_id() ), 
       m_epoll_fd(epoll_create(1) ),
-      m_wakeup_fd ( eventfd(0, EFD_CLOEXEC) )
+      m_wakeup_fd ( eventfd(0, 0) ),
+      m_timer_fd (timerfd_create(CLOCK_MONOTONIC,0) ) 
 {
   if (m_epoll_fd < 0 ) {
     ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
     exit(1);
   }
   if (m_wakeup_fd < 0 ) {
-    ERRORLOG("failed to create event loop, eventfd create error, error info[%d]", errno);
+    ERRORLOG("failed to create event loop, m_wakeup_fd create error, error info[%d]", errno);
     exit(1);
   }
+  if(m_timer_fd < 0){
+    ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
+    exit(1);
+  }
+
   INFOLOG("wakeup fd = %d", m_wakeup_fd);
 
-  initWakeUpFdEvent();
-  initTimer();
+  m_wakeup_fd_event = std::make_unique<WakeUpFdEvent>(m_wakeup_fd);
+  add(m_wakeup_fd_event.get() );
+
+  m_timer = std::make_unique<Timer>(m_timer_fd);
+  add(m_timer.get() );
 
   std::stringstream ss;
   ss << m_thread_id;
@@ -43,33 +78,14 @@ EventLoop::EventLoop()
 }
 
 EventLoop::~EventLoop() {
-  if (m_epoll_fd != -1) {
-    close(m_epoll_fd);
-  }
-  // m_timer 和 m_wakeup_fd_event 会被 unique_ptr 自动析构，无需 delete
+  close(m_epoll_fd);
+  close(m_wakeup_fd);
+  close(m_timer_fd);
 }
 
-void EventLoop::initTimer() {
-  m_timer = std::make_unique<Timer>();
-  addEpollEvent(m_timer.get());
-}
 
 void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
   m_timer->addTimerEvent(event);
-}
-
-void EventLoop::initWakeUpFdEvent() {
-
-  m_wakeup_fd_event = std::make_unique<WakeUpFdEvent>(m_wakeup_fd);
-
-  m_wakeup_fd_event->setCallback(EPOLLIN, [this]() {
-    uint64_t val;
-    uint64_t dummy;
-    if (read(m_wakeup_fd, &dummy, sizeof(dummy)) == -1 && errno != EAGAIN)
-      DEBUGLOG("read full bytes from wakeup fd[%d]", m_wakeup_fd);
-  });
-
-  addEpollEventTask(m_wakeup_fd_event.get() );
 }
 
 void EventLoop::loop() {
@@ -139,22 +155,6 @@ void EventLoop::stop() {
   wakeup();
 }
 
-inline void EventLoop::addEpollEventTask(FdEvent* fdEvent) {
-  int op = EPOLL_CTL_MOD,fd = fdEvent -> getFd();
-  
-  if (m_listen_fds.find(fd) == m_listen_fds.end() ){ 
-    op = EPOLL_CTL_ADD ;
-    m_listen_fds.insert(fd);
-  }
-
-  int rt = epoll_ctl(m_epoll_fd, op, fd , fdEvent->getEpollEvent() );
-  
-  if (rt == -1){
-    ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno));
-  }else{ 
-    DEBUGLOG("add event success, fd[%d]", fd);
-  }
-}
 
 void EventLoop::deleteEpollEventTask(FdEvent* event) {
   auto it = m_listen_fds.find(event->getFd());

@@ -9,19 +9,18 @@ namespace rocket {
 
 class FdEventGroup {
 
- public:
-  
-
+public:
   FdEvent& getFdEvent(int fd);
 
   static FdEventGroup* GetFdEventGroup();
 
- private:
+private:
   FdEventGroup(int size);
+
   FdEventGroup(const FdEventGroup&)=delete;
   FdEventGroup(FdEventGroup&&)=delete;
   FdEventGroup& operator=(const FdEventGroup&)=delete;
-  FdEventGroup&& operator=(FdEventGroup&&)=delete;
+  FdEventGroup& operator=(FdEventGroup&&)=delete;
 
   std::deque<FdEvent> m_fd_group;
   std::mutex m_mutex;

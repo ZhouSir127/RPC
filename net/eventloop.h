@@ -14,10 +14,9 @@
 namespace rocket {
 
 class EventLoop {
- public:
+public:
   // 核心：提供获取当前线程独占单例的静态入口
   static EventLoop& GetCurrentEventLoop();
-
   // 禁用拷贝和移动语义，捍卫单例的唯一性
   EventLoop(const EventLoop&) = delete;
   EventLoop& operator=(const EventLoop&) = delete;
@@ -42,13 +41,15 @@ class EventLoop {
 
   void initWakeUpFdEvent();
   void initTimer();
-  void addEpollEventTask(FdEvent* event);
+  void add(FdEvent* event);
+  void modify(FdEvent*event);
   void deleteEpollEventTask(FdEvent* event);
 
  private:
   std::thread::id m_thread_id;
   int m_epoll_fd;
   int m_wakeup_fd;
+  int m_timer_fd;
 
   std::unique_ptr<WakeUpFdEvent> m_wakeup_fd_event;
   std::unique_ptr<Timer> m_timer;
@@ -56,7 +57,7 @@ class EventLoop {
   bool m_stop_flag {false};
   bool m_is_looping {false};
 
-  std::unordered_set<int> m_listen_fds;
+  //std::unordered_set<int> m_listen_fds;
 
   std::queue<std::function<void()>> m_pending_tasks;
   mutable std::mutex m_mutex;

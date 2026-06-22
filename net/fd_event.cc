@@ -5,12 +5,10 @@
 namespace rocket {
 
 FdEvent::FdEvent(int fd) : m_fd(fd),m_read_callback(nullptr), m_write_callback(nullptr), m_error_callback(nullptr) {
-  fcntl(fd, F_SETFL,fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
-  initEvent();
-}
-
-FdEvent::FdEvent():m_fd(-1), m_read_callback(nullptr), m_write_callback(nullptr), m_error_callback(nullptr) {
-  initEvent();
+    fcntl(fd, F_SETFL,fcntl(fd, F_GETFL, 0) | O_NONBLOCK );
+    fcntl(fd, F_SETFL,fcntl(fd, F_GETFL, 0) | FD_CLOEXEC );
+    memset(&m_listen_events, 0, sizeof(m_listen_events) );
+    m_listen_events.data.ptr = this;
 }
 
 inline std::function<void()> FdEvent::handler(TriggerEvent event) {

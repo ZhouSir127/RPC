@@ -7,25 +7,21 @@
 #include "timer_event.h"
 
 namespace rocket {
+
 class Timer : public FdEvent {
- public:
-
-  Timer();
-
-  ~Timer();
+public:
+  Timer(int fd);
 
   void addTimerEvent(TimerEvent::s_ptr event);
-
   void deleteTimerEvent(TimerEvent::s_ptr event);
+  void onTimer(); // 当发生了 IO 事件后，EventLoop 会执行这个回调函数
 
-  void onTimer(); // 当发送了 IO 事件后，eventloop 会执行这个回调函数
-
- private:
+private:
   void resetArriveTime();
 
- private:
+private:
   std::multimap<int64_t, TimerEvent::s_ptr> m_pending_events;
-  std::mutex m_mutex;
+  std::mutex m_mutex; // 替换为标准库互斥锁
 };
 
 }
