@@ -141,14 +141,11 @@ void EventLoop::loop() {
   }
 }
 
-inline void EventLoop::wakeup() {
-  INFOLOG("WAKE UP");
-  m_wakeup_fd_event->wakeup();
-}
+
 
 void EventLoop::stop() {
   m_stop_flag = true;
-  wakeup();
+  m_wakeup_fd_event->wakeup();
 }
 
 
@@ -177,7 +174,7 @@ void EventLoop::addTask(const std::function<void()>&cb, bool is_wake_up /*=false
     m_pending_tasks.push(cb); 
   }
   if (is_wake_up)
-    wakeup();
+    m_wakeup_fd_event->wakeup();
 }
 
 }

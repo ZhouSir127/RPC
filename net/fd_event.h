@@ -17,7 +17,7 @@ public:
 
   const std::function<void()>& handler(TriggerEvent event_type) const;
 
-  void setCallback(TriggerEvent event_type, std::function<void()>&& callback);
+  void setCallback(TriggerEvent event_type, std::function<void()> callback);
   void cancel(TriggerEvent event_type);
 
   int getFd() const { return m_fd; }

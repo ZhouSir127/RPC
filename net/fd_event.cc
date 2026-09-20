@@ -24,16 +24,19 @@ const std::function<void()>& FdEvent::handler(TriggerEvent event) const {
   }
 }
 
-inline void FdEvent::setCallback(TriggerEvent event_type, std::function<void()>&& callback) {
+void FdEvent::setCallback(TriggerEvent event_type, std::function<void()> callback) {
     m_listen_events.events |= event_type;
     
     switch(event_type){
-      case (EPOLLIN):
+      case EPOLLIN:
         m_read_callback = std::move(callback);
-      case (EPOLLOUT):
+        break;
+      case EPOLLOUT:
         m_write_callback = std::move(callback);
-      case (EPOLLERR):
+        break;
+      case EPOLLERR:
         m_error_callback = std::move(callback);
+        break;
     }
 }
 

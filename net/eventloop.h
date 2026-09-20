@@ -28,7 +28,6 @@ public:
   // EventLoop& operator=(EventLoop&&) = delete;
 
   void loop();
-  void wakeup();
   void stop();
 
   void addEpollEvent(FdEvent* event);
