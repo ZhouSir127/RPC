@@ -83,7 +83,6 @@ EventLoop::~EventLoop() {
   close(m_timer_fd);
 }
 
-
 void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
   m_timer->addTimerEvent(event);
 }
