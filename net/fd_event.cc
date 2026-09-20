@@ -11,16 +11,16 @@ FdEvent::FdEvent(int fd) : m_fd(fd),m_read_callback(nullptr), m_write_callback(n
     m_listen_events.data.ptr = this;
 }
 
-inline std::function<void()> FdEvent::handler(TriggerEvent event) {
+const std::function<void()>& FdEvent::handler(TriggerEvent event) const {
   switch (event) { 
-    case (EPOLLIN):
+    case EPOLLIN:
       return m_read_callback;
-    case (EPOLLOUT):
+    case EPOLLOUT:
       return m_write_callback;
-    case (EPOLLERR):
+    case EPOLLERR:
       return m_error_callback;
-    default:
-      return nullptr;
+    // default:
+    //   return nullptr;
   }
 }
 

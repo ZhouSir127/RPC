@@ -15,7 +15,7 @@ public:
 
   FdEvent(int fd);
 
-  std::function<void()> handler(TriggerEvent event_type);
+  const std::function<void()>& handler(TriggerEvent event_type) const;
 
   void setCallback(TriggerEvent event_type, std::function<void()>&& callback);
   void cancel(TriggerEvent event_type);
@@ -28,9 +28,9 @@ protected:
 
   epoll_event m_listen_events;
 
-  std::function<void()> m_read_callback ;
-  std::function<void()> m_write_callback ;
-  std::function<void()> m_error_callback ;
+  std::function<void()> m_read_callback;
+  std::function<void()> m_write_callback;
+  std::function<void()> m_error_callback;
 };
 
 }
