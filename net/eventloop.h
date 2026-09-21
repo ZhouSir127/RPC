@@ -16,9 +16,9 @@ namespace rocket {
 class EventLoop {
 public:
   // 核心：提供获取当前线程独占单例的静态入口
-  static EventLoop& GetCurrentEventLoop(){
+  static EventLoop* GetCurrentEventLoop(){
     thread_local static EventLoop instance;
-    return instance;
+    return &instance;
   }
 
   // 禁用拷贝和移动语义，捍卫单例的唯一性
@@ -36,11 +36,11 @@ public:
   void addTask(const std::function<void()>&cb, bool is_wake_up = false);
   void addTimerEvent(TimerEvent::s_ptr event);
 
+    
 private:
   // 单例模式规范：将构造和析构函数完全私有化！
   EventLoop();
   ~EventLoop();
-
   void initWakeUpFdEvent();
   void initTimer();
   void add(FdEvent* event);

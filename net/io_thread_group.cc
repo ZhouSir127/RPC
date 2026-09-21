@@ -1,37 +1,35 @@
-#include "rocket/net/io_thread_group.h"
-#include "rocket/common/log.h"
+#include "io_thread_group.h"
+#include "../common/log.h"
 
 
 namespace rocket {
 
 
-IOThreadGroup::IOThreadGroup(int size) : m_size(size) {
+IOThreadGroup::IOThreadGroup(int size) : m_size(size),m_index(0) {
   m_io_thread_groups.resize(size);
-  for (size_t i = 0; (int)i < size; ++i) {
+  for (int i = 0; i < size; ++i)
     m_io_thread_groups[i] = new IOThread();
-  }
 }
 
 IOThreadGroup::~IOThreadGroup() {
-
+  for (IOThread*p:m_io_thread_groups)
+    delete p;
 }
 
-void IOThreadGroup::start() {
-  for (size_t i = 0; i < m_io_thread_groups.size(); ++i) {
-    m_io_thread_groups[i]->start();
-  }
+void IOThreadGroup::start() const{
+  for (IOThread*p:m_io_thread_groups)
+    p->start();
 }
 
-void IOThreadGroup::join() {
-  for (size_t i = 0; i < m_io_thread_groups.size(); ++i) {
-    m_io_thread_groups[i]->join();
-  }
+void IOThreadGroup::join() const{
+  for (IOThread*p:m_io_thread_groups) 
+    p->join();
 } 
 
 IOThread* IOThreadGroup::getIOThread() {
-  if (m_index == (int)m_io_thread_groups.size() || m_index == -1)  {
+  if (m_index == m_io_thread_groups.size() )
     m_index = 0;
-  }
+  
   return m_io_thread_groups[m_index++];
 }
 

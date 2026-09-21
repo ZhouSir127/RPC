@@ -17,10 +17,8 @@ const std::function<void()>& FdEvent::handler(TriggerEvent event) const {
       return m_read_callback;
     case EPOLLOUT:
       return m_write_callback;
-    case EPOLLERR:
+    default:
       return m_error_callback;
-    // default:
-    //   return nullptr;
   }
 }
 

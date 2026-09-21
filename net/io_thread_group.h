@@ -9,23 +9,21 @@ namespace rocket {
 
 class IOThreadGroup {
 
- public:
+public:
   IOThreadGroup(int size);
 
   ~IOThreadGroup();
 
-  void start();
+  void start() const;
 
-  void join();
+  void join() const;
 
   IOThread* getIOThread();
 
- private:
-
-  int m_size {0};
+private:
+  int m_size;
   std::vector<IOThread*> m_io_thread_groups;
-
-  int m_index {0};
+  int m_index;
 };
 
 }
