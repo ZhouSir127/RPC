@@ -13,8 +13,7 @@
 namespace rocket {
 
 
-inline void EventLoop::add(FdEvent* fdEvent) {
-  
+void EventLoop::add(FdEvent* fdEvent) {
   int rt = epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD , fdEvent -> getFd() , fdEvent->getEpollEvent() );  
   // if (rt == -1){
   //   ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno));
@@ -24,7 +23,7 @@ inline void EventLoop::add(FdEvent* fdEvent) {
 }
 
 
-inline void EventLoop::modify(FdEvent* fdEvent){
+void EventLoop::modify(FdEvent* fdEvent){
   
   int rt = epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD , fdEvent -> getFd() , fdEvent->getEpollEvent() );
   // if (rt == -1){
@@ -48,17 +47,13 @@ void EventLoop::Delete(FdEvent* event) {
 EventLoop::EventLoop() 
     : m_thread_id(std::this_thread::get_id() ), 
       m_epoll_fd(epoll_create(1) ),
-      m_wakeup_fd ( eventfd(0, 0) ),
       m_timer_fd (timerfd_create(CLOCK_MONOTONIC,0) ) 
 {
   // if (m_epoll_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
   //   exit(1);
   // }
-  // if (m_wakeup_fd < 0 ) {
-  //   ERRORLOG("failed to create event loop, m_wakeup_fd create error, error info[%d]", errno);
-  //   exit(1);
-  // }
+
   // if(m_timer_fd < 0){
   //   ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
   //   exit(1);
@@ -66,12 +61,10 @@ EventLoop::EventLoop()
 
   // INFOLOG("wakeup fd = %d", m_wakeup_fd);
 
-  m_wakeup_fd_event = std::make_unique<WakeUpFdEvent>(m_wakeup_fd);
-  add(m_wakeup_fd_event.get() );
+  add(&m_wakeup_fd_event);
 
   m_timer = std::make_unique<Timer>(m_timer_fd);
   add(m_timer.get() );
-
   // std::stringstream ss;
   // ss << m_thread_id;
   // INFOLOG("succ create event loop in thread %s", ss.str().c_str());
@@ -79,7 +72,6 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop() {
   close(m_epoll_fd);
-  close(m_wakeup_fd);
   close(m_timer_fd);
 }
 
@@ -145,7 +137,7 @@ void EventLoop::loop() {
 
 void EventLoop::stop() {
   m_stop_flag = true;
-  m_wakeup_fd_event->wakeup();
+  m_wakeup_fd_event.wakeup();
 }
 
 
@@ -174,7 +166,7 @@ void EventLoop::addTask(const std::function<void()>&cb, bool is_wake_up /*=false
     m_pending_tasks.push(cb); 
   }
   if (is_wake_up)
-    m_wakeup_fd_event->wakeup();
+    m_wakeup_fd_event.wakeup();
 }
 
 }

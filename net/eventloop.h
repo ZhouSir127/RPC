@@ -22,10 +22,10 @@ public:
   }
 
   // 禁用拷贝和移动语义，捍卫单例的唯一性
-  // EventLoop(const EventLoop&) = delete;
-  // EventLoop& operator=(const EventLoop&) = delete;
-  // EventLoop(EventLoop&&) = delete;
-  // EventLoop& operator=(EventLoop&&) = delete;
+  EventLoop(const EventLoop&) = delete;
+  EventLoop& operator=(const EventLoop&) = delete;
+  EventLoop(EventLoop&&) = delete;
+  EventLoop& operator=(EventLoop&&) = delete;
 
   void loop();
   void stop();
@@ -47,14 +47,12 @@ private:
   void modify(FdEvent*event);
   void Delete(FdEvent* event);
 
-
 private:
   const std::thread::id m_thread_id;
   const int m_epoll_fd;
-  const int m_wakeup_fd;
   const int m_timer_fd;
 
-  std::unique_ptr<WakeUpFdEvent> m_wakeup_fd_event;
+  WakeUpFdEvent m_wakeup_fd_event;
   std::unique_ptr<Timer> m_timer;
 
   bool m_stop_flag {false};

@@ -7,7 +7,9 @@ namespace rocket {
 
 class WakeUpFdEvent : public FdEvent {
 public:
-  WakeUpFdEvent(int fd);
+  WakeUpFdEvent();
+  ~WakeUpFdEvent();
+
   void wakeup();
 };
 

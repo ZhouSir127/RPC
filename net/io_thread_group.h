@@ -2,6 +2,7 @@
 #define ROCKET_NET_IO_THREAD_GROUP_H
 
 #include <vector>
+#include <memory>
 #include "../common/log.h"
 #include "io_thread.h"
 
@@ -12,8 +13,6 @@ class IOThreadGroup {
 public:
   IOThreadGroup(int size);
 
-  ~IOThreadGroup();
-
   void start() const;
 
   void join() const;
@@ -21,9 +20,8 @@ public:
   IOThread* getIOThread();
 
 private:
-  int m_size;
-  std::vector<IOThread*> m_io_thread_groups;
-  int m_index;
+  std::vector<std::unique_ptr<IOThread>> m_io_thread_groups;
+  int m_index{0};
 };
 
 }

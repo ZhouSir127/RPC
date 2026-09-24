@@ -16,13 +16,12 @@ public:
     return m_event_loop;
   }
 
-  void start();
+  void start ();
   void join();
 
-  static void* Main(void* arg);
-
 private:
-  pid_t m_thread_id {-1};    // 线程号
+  static void* Main(void* arg);
+  // pid_t m_thread_id {-1};    // 线程号
   pthread_t m_thread {0};   // 线程句柄
   EventLoop* m_event_loop {NULL}; // 当前 io 线程的 loop 对象
   sem_t m_init_semaphore;
