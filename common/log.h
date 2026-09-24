@@ -186,7 +186,7 @@ class Logger {
 
   AsyncLogger::s_ptr m_asnyc_app_logger;
 
-  TimerEvent::s_ptr m_timer_event;
+std::shared_ptr<TimerEvent> m_timer_event;
 
   int m_type {0};
 

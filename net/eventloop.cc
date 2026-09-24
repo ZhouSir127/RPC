@@ -46,25 +46,19 @@ void EventLoop::Delete(FdEvent* event) {
 
 EventLoop::EventLoop() 
     : m_thread_id(std::this_thread::get_id() ), 
-      m_epoll_fd(epoll_create(1) ),
-      m_timer_fd (timerfd_create(CLOCK_MONOTONIC,0) ) 
+      m_epoll_fd(epoll_create(1) )
+      //m_timer_fd ( ) 
 {
   // if (m_epoll_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
   //   exit(1);
   // }
 
-  // if(m_timer_fd < 0){
-  //   ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
-  //   exit(1);
-  // }
 
-  // INFOLOG("wakeup fd = %d", m_wakeup_fd);
 
   add(&m_wakeup_fd_event);
 
-  m_timer = std::make_unique<Timer>(m_timer_fd);
-  add(m_timer.get() );
+  add(&m_timer);
   // std::stringstream ss;
   // ss << m_thread_id;
   // INFOLOG("succ create event loop in thread %s", ss.str().c_str());
@@ -72,16 +66,15 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop() {
   close(m_epoll_fd);
-  close(m_timer_fd);
 }
 
-void EventLoop::addTimerEvent(TimerEvent::s_ptr event) {
-  m_timer->addTimerEvent(event);
+void EventLoop::addTimerEvent(std::shared_ptr<TimerEvent> event) {
+  m_timer.addTimerEvent(event);
 }
 //???
 
 void EventLoop::loop() {
-  while (!m_stop_flag) {
+  while (m_stop_flag == false) {
     // 1. 处理异步任务队列
     std::queue<std::function<void()>> tmp_tasks;
     {
@@ -89,11 +82,10 @@ void EventLoop::loop() {
       m_pending_tasks.swap(tmp_tasks);
     } // 锁的作用域被精确控制，尽早释放
 
-    while (!tmp_tasks.empty()) {
-      std::function<void()> cb = std::move(tmp_tasks.front()); // 减少 std::function 拷贝开销
+    while (tmp_tasks.empty() == false) {
+      if (tmp_tasks.front() )
+        tmp_tasks.front()();
       tmp_tasks.pop();
-      if (cb)
-        cb();
     }
 
     constexpr int g_epoll_max_timeout = 10000;
@@ -108,8 +100,7 @@ void EventLoop::loop() {
     //   ERRORLOG("epoll_wait error, errno=%d, error=%s", errno, strerror(errno));
     // } else 
     //{
-      for (int i = 0; i < rt; ++i) {
-        const epoll_event&trigger_event = result_events[i];
+      for (epoll_event&trigger_event:result_events) {
         FdEvent* fd_event = static_cast<FdEvent*>(trigger_event.data.ptr);
         // if (fd_event == nullptr)
         //   continue;
@@ -133,30 +124,23 @@ void EventLoop::loop() {
   }
 }
 
-
-
 void EventLoop::stop() {
   m_stop_flag = true;
   m_wakeup_fd_event.wakeup();
 }
 
-
-void EventLoop::addEpollEvent(FdEvent* fdEvent) {
+void EventLoop::addEpollEvent(FdEvent* event) {
   if (std::this_thread::get_id() == m_thread_id)
-    add(fdEvent);
-  else  {
-    auto cb = [this, fdEvent]() { add(fdEvent); };
-    addTask(cb, true);
-  }
+    add(event);
+  else
+    addTask([this,event]() { add(event); }, true);
 }
 
 void EventLoop::deleteEpollEvent(FdEvent* event) {
-  if (std::this_thread::get_id() == m_thread_id) {
-    delete(event);
-  } else {
-    auto cb = [this, event]() { delete(event); };
-    addTask(cb, true);
-  }
+  if (std::this_thread::get_id() == m_thread_id)
+    Delete(event);
+  else 
+    addTask([this, event]() { Delete(event); }, true);
 }
 
 void EventLoop::addTask(const std::function<void()>&cb, bool is_wake_up /*=false*/) {

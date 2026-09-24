@@ -34,14 +34,13 @@ public:
   void deleteEpollEvent(FdEvent* event);
 
   void addTask(const std::function<void()>&cb, bool is_wake_up = false);
-  void addTimerEvent(TimerEvent::s_ptr event);
-
+  void addTimerEvent(std::shared_ptr<TimerEvent> event);
     
 private:
   // 单例模式规范：将构造和析构函数完全私有化！
   EventLoop();
   ~EventLoop();
-  void initWakeUpFdEvent();
+
   void initTimer();
   void add(FdEvent* event);
   void modify(FdEvent*event);
@@ -50,10 +49,8 @@ private:
 private:
   const std::thread::id m_thread_id;
   const int m_epoll_fd;
-  const int m_timer_fd;
-
   WakeUpFdEvent m_wakeup_fd_event;
-  std::unique_ptr<Timer> m_timer;
+  Timer m_timer;
 
   bool m_stop_flag {false};
   std::queue<std::function<void()> > m_pending_tasks;

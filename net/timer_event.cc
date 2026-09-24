@@ -4,8 +4,7 @@
 
 namespace rocket {
 
-TimerEvent::TimerEvent(int interval, bool is_repeated, std::function<void()> cb)
-    : m_interval(interval), m_is_repeated(is_repeated), m_task(std::move(cb)) {
+TimerEvent::TimerEvent(int interval, bool is_repeated, const std::function<void()>& cb): m_interval(interval), m_is_repeated(is_repeated), m_task(std::move(cb)) {
   resetArriveTime();
 }
 

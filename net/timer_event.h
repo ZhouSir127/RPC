@@ -8,10 +8,9 @@
 namespace rocket {
 
 class TimerEvent {
- public:
-  typedef std::shared_ptr<TimerEvent> s_ptr;
+public:
 
-  TimerEvent(int interval, bool is_repeated, std::function<void()> cb);
+  TimerEvent(int interval, bool is_repeated, const std::function<void()>&cb);
 
   int64_t getArriveTime() const { return m_arrive_time; }
   void setCanceled(bool value) { m_is_canceled = value; }
@@ -25,7 +24,7 @@ class TimerEvent {
   int64_t m_arrive_time {0};    // ms
   int64_t m_interval {0};       // ms
   bool m_is_repeated {false};
-  bool m_is_canceled {false};   // 修正拼写 Cancled -> Canceled
+  bool m_is_canceled {false};
 
   std::function<void()> m_task;
 };

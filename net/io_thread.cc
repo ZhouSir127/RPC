@@ -31,7 +31,6 @@ void* IOThread::Main(void* arg) {
   IOThread* thread = static_cast<IOThread*>(arg);
 
   thread->m_event_loop = EventLoop::GetCurrentEventLoop();
-  // thread->m_thread_id = getThreadId();
 
   // 唤醒等待的线程
   sem_post(&thread->m_init_semaphore);

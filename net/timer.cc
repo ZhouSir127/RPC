@@ -7,58 +7,64 @@
 
 namespace rocket {
 
-Timer::Timer(int fd) : FdEvent(fd) {
-  DEBUGLOG("timer fd=%d", m_fd);
+Timer::Timer() {
+  int m_timer_fd = timerfd_create(CLOCK_MONOTONIC,0);
+    // if(m_timer_fd < 0){
+  //   ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
+  //   exit(1);
+  // }
+//  DEBUGLOG("timer fd=%d", m_fd);
+    m_fd = m_timer_fd;
+    init();
   // 优化：放弃旧的 std::bind，使用现代 C++ Lambda 表达式，不仅可读性强而且执行更快
   setCallback(EPOLLIN, [this]() {
     onTimer();
   });
 }
 
+Timer::~Timer(){
+  close(m_fd);
+}
+
 void Timer::onTimer() {
   // 优化：标准的 eventfd/timerfd 清除缓冲区的读法，必须使用 uint64_t
   uint64_t val;
-  while (read(m_fd, &val, sizeof(val)) != -1 && errno != EAGAIN) {
-  }
+  while (read(m_fd, &val, sizeof(val)) != -1 && errno != EAGAIN);
 
   int64_t now = getNowMs();
-  std::vector<TimerEvent::s_ptr> tmps;
+  std::vector<std::shared_ptr<TimerEvent>> tmps;
   std::vector<std::function<void()>> tasks;
 
-  {
-    // 替换为标准的 std::unique_lock
+  {// 替换为标准的 std::unique_lock
     std::unique_lock<std::mutex> lock(m_mutex);
     
     auto it = m_pending_events.begin();
     while (it != m_pending_events.end() && it->first <= now) {
-      if (!it->second->isCanceled()) {
+      if (it->second->isCanceled() == false) {
         tmps.push_back(it->second);
         // 优化：直接存回调，不再需要 std::pair，节省内存
         tasks.push_back(it->second->getCallBack()); 
       }
       ++it;
-    }
+    }    
     // 批量删除已到期的事件
     m_pending_events.erase(m_pending_events.begin(), it);
   } // 提前释放锁
 
   // 处理重复任务：需要重新调整时间并加回红黑树
-  for (auto& event : tmps) {
+  for (auto& event : tmps)
     if (event->isRepeated()) {
       event->resetArriveTime();
       addTimerEvent(event); 
     }
-  }
 
   // 因为我们弹出了节点，导致最小的时间戳变了，需要重置底层的定时器硬件触发时间
   resetArriveTime();
 
   // 执行业务逻辑（严格在锁外部执行，防止死锁或阻塞其他线程添加定时器）
-  for (auto& task : tasks) {
-    if (task) {
+  for (auto& task : tasks)
+    if (task)
       task();
-    }
-  }
 }
 
 void Timer::resetArriveTime() {
@@ -92,7 +98,7 @@ void Timer::resetArriveTime() {
   }
 }
 
-void Timer::addTimerEvent(TimerEvent::s_ptr event) {
+void Timer::addTimerEvent(std::shared_ptr<TimerEvent> event) {
   bool is_reset_timerfd = false;
 
   {
@@ -114,7 +120,7 @@ void Timer::addTimerEvent(TimerEvent::s_ptr event) {
   }
 }
 
-void Timer::deleteTimerEvent(TimerEvent::s_ptr event) {
+void Timer::deleteTimerEvent(std::shared_ptr<TimerEvent> event) {
   event->setCanceled(true);
 
   std::unique_lock<std::mutex> lock(m_mutex);

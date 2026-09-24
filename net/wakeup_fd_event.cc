@@ -11,7 +11,10 @@ WakeUpFdEvent::WakeUpFdEvent() {
   //   ERRORLOG("failed to create event loop, m_wakeup_fd create error, error info[%d]", errno);
   //   exit(1);
   // }
-  setFd(m_wakeup_fd);
+    // INFOLOG("wakeup fd = %d", m_wakeup_fd);
+  m_fd = m_wakeup_fd;
+  init();
+  
   setCallback(EPOLLIN, [this]() {
     uint64_t dummy;
     if (read(m_fd, &dummy, sizeof(dummy)) == -1 && errno != EAGAIN)
