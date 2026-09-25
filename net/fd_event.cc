@@ -26,7 +26,7 @@ void FdEvent::init(){
     m_listen_events.data.ptr = this;
 }
 
-void FdEvent::setCallback(TriggerEvent event_type, const std::function<void()>&callback) {
+void FdEvent::setCallback(TriggerEvent event_type, std::function<void()> callback) {
     m_listen_events.events |= event_type;
     
     switch(event_type){

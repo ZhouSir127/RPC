@@ -33,7 +33,7 @@ public:
   void addEpollEvent(FdEvent* event);
   void deleteEpollEvent(FdEvent* event);
 
-  void addTask(const std::function<void()>&cb, bool is_wake_up = false);
+  void addTask(const std::function<void()>&cb);
   void addTimerEvent(std::shared_ptr<TimerEvent> event);
     
 private:

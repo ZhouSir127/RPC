@@ -9,14 +9,13 @@ namespace rocket {
 
 class TimerEvent {
 public:
-
-  TimerEvent(int interval, bool is_repeated, const std::function<void()>&cb);
+  TimerEvent(int interval, bool is_repeated, std::function<void()>cb);
 
   int64_t getArriveTime() const { return m_arrive_time; }
   void setCanceled(bool value) { m_is_canceled = value; }
   bool isCanceled() const { return m_is_canceled; }
   bool isRepeated() const { return m_is_repeated; }
-  std::function<void()> getCallBack() const { return m_task; }
+  const std::function<void()>& getCallBack() const { return m_task; }
 
   void resetArriveTime();
 
@@ -25,7 +24,7 @@ public:
   int64_t m_interval {0};       // ms
   bool m_is_repeated {false};
   bool m_is_canceled {false};
-
+  
   std::function<void()> m_task;
 };
 

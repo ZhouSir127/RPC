@@ -12,11 +12,9 @@ class Timer : public FdEvent {
 public:
   Timer();
   ~Timer();
-  void addTimerEvent(std::shared_ptr<TimerEvent> event);
-  void deleteTimerEvent(std::shared_ptr<TimerEvent> event);
+  void addTimerEvent(const std::shared_ptr<TimerEvent>& event);
+  void deleteTimerEvent(const std::shared_ptr<TimerEvent>& event);
   void onTimer(); // 当发生了 IO 事件后，EventLoop 会执行这个回调函数
-
-private:
   void resetArriveTime();
 
 private:

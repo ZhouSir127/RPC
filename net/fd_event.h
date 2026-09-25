@@ -26,7 +26,7 @@ protected:
   epoll_event m_listen_events;
   
   void init();
-  void setCallback(TriggerEvent event_type, const std::function<void()>&callback);
+  void setCallback(TriggerEvent event_type, std::function<void()> callback);
   void cancel(TriggerEvent event_type);
 
   std::function<void()> m_read_callback{nullptr};

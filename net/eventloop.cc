@@ -53,11 +53,7 @@ EventLoop::EventLoop()
   //   ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
   //   exit(1);
   // }
-
-
-
   add(&m_wakeup_fd_event);
-
   add(&m_timer);
   // std::stringstream ss;
   // ss << m_thread_id;
@@ -70,6 +66,7 @@ EventLoop::~EventLoop() {
 
 void EventLoop::addTimerEvent(std::shared_ptr<TimerEvent> event) {
   m_timer.addTimerEvent(event);
+  m_timer.resetArriveTime();
 }
 //???
 
@@ -132,25 +129,27 @@ void EventLoop::stop() {
 void EventLoop::addEpollEvent(FdEvent* event) {
   if (std::this_thread::get_id() == m_thread_id)
     add(event);
-  else
-    addTask([this,event]() { add(event); }, true);
+  else{
+    addTask([this,event]() { add(event); });
+    m_wakeup_fd_event.wakeup();
+  }
 }
 
 void EventLoop::deleteEpollEvent(FdEvent* event) {
   if (std::this_thread::get_id() == m_thread_id)
     Delete(event);
-  else 
-    addTask([this, event]() { Delete(event); }, true);
+  else{
+    addTask([this, event]() { Delete(event); });
+    m_wakeup_fd_event.wakeup();
+  }
 }
 
-void EventLoop::addTask(const std::function<void()>&cb, bool is_wake_up /*=false*/) {
+void EventLoop::addTask(const std::function<void()>&cb) {
   {
     std::unique_lock<std::mutex> lock(m_mutex);
     // 使用 std::move 避免 function 对象的深拷贝
     m_pending_tasks.push(cb); 
-  }
-  if (is_wake_up)
-    m_wakeup_fd_event.wakeup();
+  }    
 }
 
 }
