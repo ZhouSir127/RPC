@@ -2,9 +2,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <string.h>
-#include "rocket/common/log.h"
-#include "rocket/net/tcp/net_addr.h"
-#include "rocket/net/tcp/tcp_acceptor.h"
+#include "../../common/log.h"
+#include "net_addr.h"
+#include "tcp_acceptor.h"
 
 
 namespace rocket {
@@ -15,7 +15,7 @@ TcpAcceptor::TcpAcceptor(NetAddr::s_ptr local_addr) : m_local_addr(local_addr) {
     exit(0);
   }
 
-  m_family = m_local_addr->getFamily();
+  m_family = m_local_addr->getSockAddr()->sa_family;
   
   m_listenfd = socket(m_family, SOCK_STREAM, 0);
 

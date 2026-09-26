@@ -6,11 +6,9 @@
 
 namespace rocket {
 
-TcpServer::TcpServer(NetAddr::s_ptr local_addr) : m_local_addr(local_addr) {
-
+TcpServer::TcpServer(const NetAddr::s_ptr&local_addr) : m_local_addr(local_addr) {
   init(); 
-
-  INFOLOG("rocket TcpServer listen sucess on [%s]", m_local_addr->toString().c_str());
+  //INFOLOG("rocket TcpServer listen sucess on [%s]", m_local_addr->toString().c_str());
 }
 
 TcpServer::~TcpServer() {

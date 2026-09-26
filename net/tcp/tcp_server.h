@@ -11,15 +11,13 @@
 namespace rocket {
 
 class TcpServer {
- public:
-  TcpServer(NetAddr::s_ptr local_addr);
+public:
+  TcpServer(const NetAddr::s_ptr& local_addr);
 
   ~TcpServer();
 
   void start();
-
-
- private:
+private:
   void init();
 
   // 当有新客户端连接之后需要执行
@@ -27,7 +25,6 @@ class TcpServer {
 
   // 清除 closed 的连接
   void ClearClientTimerFunc();
-
 
  private:
   TcpAcceptor::s_ptr m_acceptor;

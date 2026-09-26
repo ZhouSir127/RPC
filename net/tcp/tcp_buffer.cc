@@ -1,7 +1,7 @@
 #include <memory>
 #include <string.h>
-#include "rocket/common/log.h"
-#include "rocket/net/tcp/tcp_buffer.h"
+#include "../../common/log.h"
+#include "tcp_buffer.h"
 
 namespace rocket {
 

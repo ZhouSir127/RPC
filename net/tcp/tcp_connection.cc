@@ -1,9 +1,9 @@
 #include <unistd.h>
-#include "rocket/common/log.h"
-#include "rocket/net/fd_event_group.h"
-#include "rocket/net/tcp/tcp_connection.h"
-#include "rocket/net/coder/string_coder.h"
-#include "rocket/net/coder/tinypb_coder.h"
+#include "../../common/log.h"
+#include "../fd_event_group.h"
+#include "tcp_connection.h"
+#include "../coder/string_coder.h"
+#include "../coder/tinypb_coder.h"
 
 namespace rocket {
 
