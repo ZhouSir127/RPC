@@ -1,8 +1,8 @@
 #ifndef ROCKERT_NET_STRING_CODER_H
 #define ROCKERT_NET_STRING_CODER_H
 
-#include "rocket/net/coder/abstract_coder.h"
-#include "rocket/net/coder/abstract_protocol.h"
+#include "abstract_coder.h"
+#include "abstract_protocol.h"
 
 namespace rocket {
 

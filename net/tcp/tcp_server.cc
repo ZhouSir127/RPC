@@ -1,10 +1,8 @@
-#include "rocket/net/tcp/tcp_server.h"
-#include "rocket/net/eventloop.h"
-#include "rocket/net/tcp/tcp_connection.h"
-#include "rocket/common/log.h"
-#include "rocket/common/config.h"
-
-
+#include "tcp_server.h"
+#include "../eventloop.h"
+#include "tcp_connection.h"
+#include "../../common/log.h"
+#include "../../common/config.h"
 
 namespace rocket {
 

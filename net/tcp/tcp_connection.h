@@ -4,11 +4,11 @@
 #include <memory>
 #include <map>
 #include <queue>
-#include "rocket/net/tcp/net_addr.h"
-#include "rocket/net/tcp/tcp_buffer.h"
-#include "rocket/net/io_thread.h"
-#include "rocket/net/coder/abstract_coder.h"
-#include "rocket/net/rpc/rpc_dispatcher.h"
+#include "net_addr.h"
+#include "tcp_buffer.h"
+#include "../io_thread.h"
+#include "../coder/abstract_coder.h"
+#include "../rpc/rpc_dispatcher.h"
 
 namespace rocket {
 

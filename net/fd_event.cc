@@ -38,7 +38,6 @@ void FdEvent::setCallback(TriggerEvent event_type, std::function<void()> callbac
         break;
       default:
         m_error_callback = std::move(callback);
-        break;
     }
 }
 

@@ -5,8 +5,8 @@
 #include <google/protobuf/stubs/callback.h>
 #include <string>
 
-#include "rocket/net/tcp/net_addr.h"
-#include "rocket/common/log.h"
+#include "../tcp/net_addr.h"
+#include "../../common/log.h"
 
 namespace rocket {
 

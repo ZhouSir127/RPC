@@ -1,8 +1,8 @@
 #ifndef ROCKET_NET_CODER_TINYPB_CODER_H
 #define ROCKET_NET_CODER_TINYPB_CODER_H
 
-#include "rocket/net/coder/abstract_coder.h"
-#include "rocket/net/coder/tinypb_protocol.h"
+#include "abstract_coder.h"
+#include "tinypb_protocol.h"
 
 namespace rocket {
 

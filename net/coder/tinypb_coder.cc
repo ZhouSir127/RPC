@@ -1,10 +1,10 @@
 #include <vector>
 #include <string.h>
 #include <arpa/inet.h>
-#include "rocket/net/coder/tinypb_coder.h"
-#include "rocket/net/coder/tinypb_protocol.h"
-#include "rocket/common/util.h"
-#include "rocket/common/log.h"
+#include "tinypb_coder.h"
+#include "tinypb_protocol.h"
+#include "../../common/util.h"
+#include "../../common/log.h"
 
 namespace rocket {
 

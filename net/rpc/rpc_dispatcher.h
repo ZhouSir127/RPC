@@ -5,8 +5,8 @@
 #include <memory>
 #include <google/protobuf/service.h>
 
-#include "rocket/net/coder/abstract_protocol.h"
-#include "rocket/net/coder/tinypb_protocol.h"
+#include "../coder/abstract_protocol.h"
+#include "../coder/tinypb_protocol.h"
 
 namespace rocket {
 

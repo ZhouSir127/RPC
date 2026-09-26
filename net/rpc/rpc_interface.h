@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <google/protobuf/message.h>
-#include "rocket/net/rpc/rpc_controller.h"
+#include "rpc_controller.h"
 
 namespace rocket {
 

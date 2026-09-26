@@ -34,7 +34,7 @@ public:
   void deleteEpollEvent(FdEvent* event);
 
   void addTask(const std::function<void()>&cb);
-  void addTimerEvent(std::shared_ptr<TimerEvent> event);
+  void addTimerEvent(TimerEvent event);
     
 private:
   // 单例模式规范：将构造和析构函数完全私有化！

@@ -64,9 +64,9 @@ EventLoop::~EventLoop() {
   close(m_epoll_fd);
 }
 
-void EventLoop::addTimerEvent(std::shared_ptr<TimerEvent> event) {
-  m_timer.addTimerEvent(event);
-  m_timer.resetArriveTime();
+void EventLoop::addTimerEvent(TimerEvent event) {
+  m_timer.addTimerEvent(std::move(event) );
+  m_timer.resetTimer();
 }
 //???
 

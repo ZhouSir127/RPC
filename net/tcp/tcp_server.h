@@ -2,11 +2,11 @@
 #define ROCKET_NET_TCP_SERVER_H
 
 #include <set>
-#include "rocket/net/tcp/tcp_acceptor.h"
-#include "rocket/net/tcp/tcp_connection.h"
-#include "rocket/net/tcp/net_addr.h"
-#include "rocket/net/eventloop.h"
-#include "rocket/net/io_thread_group.h"
+#include "tcp_acceptor.h"
+#include "tcp_connection.h"
+#include "net_addr.h"
+#include "../eventloop.h"
+#include "../io_thread_group.h"
 
 namespace rocket {
 

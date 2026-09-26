@@ -1,4 +1,4 @@
-#include "rocket/net/coder/tinypb_protocol.h"
+#include "tinypb_protocol.h"
 
 namespace rocket {
 

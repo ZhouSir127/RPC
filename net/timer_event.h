@@ -11,13 +11,18 @@ class TimerEvent {
 public:
   TimerEvent(int interval, bool is_repeated, std::function<void()>cb);
 
+  TimerEvent&operator=(const TimerEvent&)=delete;
+  TimerEvent(const TimerEvent&) = delete;
+  TimerEvent(TimerEvent&&) = default;
+  TimerEvent& operator=(TimerEvent&&) = default;
+
   int64_t getArriveTime() const { return m_arrive_time; }
   void setCanceled(bool value) { m_is_canceled = value; }
   bool isCanceled() const { return m_is_canceled; }
   bool isRepeated() const { return m_is_repeated; }
   const std::function<void()>& getCallBack() const { return m_task; }
 
-  void resetArriveTime();
+  void resetArriveTime() ;
 
  private:
   int64_t m_arrive_time {0};    // ms
@@ -25,7 +30,7 @@ public:
   bool m_is_repeated {false};
   bool m_is_canceled {false};
   
-  std::function<void()> m_task;
+  std::function<void()> m_task{nullptr};
 };
 
 }

@@ -2,8 +2,8 @@
 #define ROCKET_NET_ABSTRACT_CODER_H
 
 #include <vector>
-#include "rocket/net/tcp/tcp_buffer.h"
-#include "rocket/net/coder/abstract_protocol.h"
+#include "../tcp/tcp_buffer.h"
+#include "abstract_protocol.h"
 
 namespace rocket {
 

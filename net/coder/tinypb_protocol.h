@@ -2,7 +2,7 @@
 #define ROCKET_NET_CODER_TINYPB_PROTOCOL_H 
 
 #include <string>
-#include "rocket/net/coder/abstract_protocol.h"
+#include "abstract_protocol.h"
 
 namespace rocket {
 

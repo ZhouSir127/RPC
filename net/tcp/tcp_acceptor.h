@@ -2,7 +2,7 @@
 #define ROCKET_NET_TCP_TCP_ACCEPTOR_H
 
 #include <memory>
-#include "rocket/net/tcp/net_addr.h"
+#include "net_addr.h"
 
 namespace rocket {
 
