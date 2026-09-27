@@ -70,8 +70,7 @@ class TcpConnection {
 
   void reply(std::vector<AbstractProtocol::s_ptr>& replay_messages);
 
- private:
-
+private:
   EventLoop* m_event_loop {NULL};   // 代表持有该连接的 IO 线程
 
   std::shared_ptr<NetAddr> m_local_addr;
@@ -95,7 +94,6 @@ class TcpConnection {
 
   // key 为 msg_id
   std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
-  
 };
 
 }

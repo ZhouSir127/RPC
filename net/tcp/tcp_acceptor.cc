@@ -9,7 +9,7 @@
 
 namespace rocket {
 
-TcpAcceptor::TcpAcceptor(const std::shared_ptr<NetAddr>&local_addr) : 
+TcpAcceptor::TcpAcceptor(const std::shared_ptr<NetAddr>&local_addr,std::function<void()>f) : 
 FdEvent(socket(local_addr->getSockAddr()->sa_family, SOCK_STREAM, 0)),
 m_local_addr(local_addr),
 m_family(m_local_addr->getSockAddr()->sa_family)
@@ -36,6 +36,8 @@ m_family(m_local_addr->getSockAddr()->sa_family)
     // ERRORLOG("listen error, errno=%d, error=%s", errno, strerror(errno));
     // exit(0);
   }
+
+  setCallback(EPOLLIN,std::move(f) );
 }
 
 TcpAcceptor::~TcpAcceptor(){
@@ -56,14 +58,14 @@ std::pair<int, std::shared_ptr<NetAddr> > TcpAcceptor::accept() {
     // if (client_fd < 0) {
     //   ERRORLOG("accept error, errno=%d, error=%s", errno, strerror(errno));
     // }
-    IPNetAddr::s_ptr peer_addr = std::make_shared<IPNetAddr>(client_addr);
     //INFOLOG("A client have accpeted succ, peer addr [%s]", peer_addr->toString().c_str());
-
-    return std::make_pair(client_fd, peer_addr);
+    return {client_fd, std::make_shared<IPNetAddr>(client_addr)};
   } else {
     // ...
     return std::make_pair(-1, nullptr);
   }
 }
+
+
 
 }

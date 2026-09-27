@@ -17,7 +17,6 @@ Timer::Timer():FdEvent(timerfd_create(CLOCK_MONOTONIC,0) ) {
   setCallback(EPOLLIN, [this]() {
     onTimer();
   });
-
 }
 
 Timer::~Timer(){

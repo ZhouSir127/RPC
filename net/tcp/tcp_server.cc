@@ -9,48 +9,24 @@ namespace rocket {
 TcpServer::TcpServer(const std::shared_ptr<NetAddr>&local_addr) 
 :m_local_addr(local_addr),
 m_main_event_loop(EventLoop::GetCurrentEventLoop() ),  
-m_io_thread_group (Config::GetGlobalConfig()->m_io_threads ), 
-m_listen_fd_event(local_addr)
-{
-  m_listen_fd_event.listen(FdEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
-  m_main_event_loop->addEpollEvent(m_listen_fd_event);
-
-  m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
-	m_main_event_loop->addTimerEvent(m_clear_client_timer_event); 
+m_io_thread_group (Config::GetGlobalConfig()->m_io_threads), 
+m_listen_fd_event(local_addr,[this](){onAccept();} )
+{ 
+  m_main_event_loop->addEpollEvent(&m_listen_fd_event);
+	m_main_event_loop->addTimerEvent( TimerEvent(5000, true, [this](){ClearClientTimerFunc();}) ); 
   //INFOLOG("rocket TcpServer listen sucess on [%s]", m_local_addr->toString().c_str());
 }
 
-TcpServer::~TcpServer() {
-  if (m_main_event_loop) {
-    delete m_main_event_loop;
-    m_main_event_loop = NULL;
-  }
-  if (m_io_thread_group) {
-    delete m_io_thread_group;
-    m_io_thread_group = NULL; 
-  }
-}
-
-
 void TcpServer::onAccept() {
-  auto re = m_acceptor->accept();
-  int client_fd = re.first;
-  NetAddr::s_ptr peer_addr = re.second;
+  auto [client_fd,peer_addr] = m_listen_fd_event.accept();
 
-  m_client_counts++;
-  
   // 把 cleintfd 添加到任意 IO 线程里面
-  IOThread* io_thread = m_io_thread_group->getIOThread();
-  TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 128, peer_addr, m_local_addr);
-  connetion->setState(Connected);
-
-  m_client.insert(connetion);
-
-  INFOLOG("TcpServer succ get client, fd=%d", client_fd);
+  m_client.emplace(m_io_thread_group.getIOThread()->getEventLoop(),client_fd, peer_addr, m_local_addr).first->second.setState(Connected);
+  //INFOLOG("TcpServer succ get client, fd=%d", client_fd);
 }
 
 void TcpServer::start() {
-  m_io_thread_group->start();
+  m_io_thread_group.start();
   m_main_event_loop->loop();
 }
 

@@ -1,7 +1,7 @@
 #ifndef ROCKET_NET_TCP_SERVER_H
 #define ROCKET_NET_TCP_SERVER_H
 
-#include <set>
+#include <unordered_map>
 #include "tcp_acceptor.h"
 #include "tcp_connection.h"
 #include "net_addr.h"
@@ -13,15 +13,10 @@ namespace rocket {
 class TcpServer {
 public:
   TcpServer(const std::shared_ptr<NetAddr>& local_addr);
-  ~TcpServer();
-
+  void onAccept();
   void start();
 private:
-  void init();
-
   // 当有新客户端连接之后需要执行
-  void onAccept();
-
   // 清除 closed 的连接
   void ClearClientTimerFunc();
   std::shared_ptr<NetAddr> m_local_addr;    // 本地监听地址
@@ -32,11 +27,8 @@ private:
 
   TcpAcceptor m_listen_fd_event;
 
-  int m_client_counts {0};
-
-  std::set<TcpConnection::s_ptr> m_client;
-
-  TimerEvent::s_ptr m_clear_client_timer_event;
+  std::unordered_map<int,TcpConnection> m_client;
+  //TimerEvent m_clear_client_timer_event;
 };
 
 }

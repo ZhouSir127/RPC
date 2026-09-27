@@ -10,7 +10,6 @@ namespace rocket {
 
 class NetAddr {
 public:
-
   virtual sockaddr* getSockAddr() = 0;
   virtual socklen_t getSockLen() = 0;
   virtual std::string toString() = 0;
@@ -20,7 +19,6 @@ public:
 
 
 class IPNetAddr : public NetAddr {
-
 public:
   static bool CheckValid(const std::string& addr);
   IPNetAddr(const std::string& ip, uint16_t port);
@@ -31,7 +29,7 @@ public:
   int getFamily();
   std::string toString();
   bool checkValid();
- 
+
 private:
   void init();
   sockaddr_in m_addr;

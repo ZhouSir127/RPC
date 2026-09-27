@@ -2,11 +2,11 @@
 #define ROCKET_NET_TCP_TCP_CLIENT_H
 
 #include <memory>
-#include "rocket/net/tcp/net_addr.h"
-#include "rocket/net/eventloop.h"
-#include "rocket/net/tcp/tcp_connection.h"
-#include "rocket/net/coder/abstract_protocol.h"
-#include "rocket/net/timer_event.h"
+#include "net_addr.h"
+#include "../eventloop.h"
+#include "tcp_connection.h"
+#include "../coder/abstract_protocol.h"
+#include "../timer_event.h"
 
 
 namespace rocket {
@@ -15,7 +15,7 @@ class TcpClient {
  public:
   typedef std::shared_ptr<TcpClient> s_ptr;
 
-  TcpClient(NetAddr::s_ptr peer_addr);
+  TcpClient(std::shared_ptr<NetAddr> peer_addr);
 
   ~TcpClient();
 

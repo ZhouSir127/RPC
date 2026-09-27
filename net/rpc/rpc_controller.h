@@ -40,13 +40,13 @@ class RpcController : public google::protobuf::RpcController {
 
   std::string GetMsgId();
 
-  void SetLocalAddr(NetAddr::s_ptr addr);
+  void SetLocalAddr(std::shared_ptr<NetAddr> addr);
 
-  void SetPeerAddr(NetAddr::s_ptr addr);
+  void SetPeerAddr(std::shared_ptr<NetAddr> addr);
 
-  NetAddr::s_ptr GetLocalAddr();
+  std::shared_ptr<NetAddr> GetLocalAddr();
 
-  NetAddr::s_ptr GetPeerAddr();
+  std::shared_ptr<NetAddr> GetPeerAddr();
 
   void SetTimeout(int timeout);
 
@@ -65,8 +65,8 @@ class RpcController : public google::protobuf::RpcController {
   bool m_is_cancled {false};
   bool m_is_finished {false};
 
-  NetAddr::s_ptr m_local_addr;
-  NetAddr::s_ptr m_peer_addr;
+  std::shared_ptr<NetAddr> m_local_addr;
+  std::shared_ptr<NetAddr> m_peer_addr;
 
   int m_timeout {1000};   // ms
 
