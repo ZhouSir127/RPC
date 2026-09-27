@@ -8,25 +8,20 @@ namespace rocket {
 
 class TcpBuffer {
 
- public:
+public:
 
   typedef std::shared_ptr<TcpBuffer> s_ptr;
 
   TcpBuffer(int size);
-
-  ~TcpBuffer();
-
   // 返回可读字节数
-  int readAble();
-
   // 返回可写的字节数
-  int writeAble();
+  int writeAble() const ;
 
-  int readIndex();
+  int readIndex() const ;
 
-  int writeIndex();
+  int writeIndex() const ;
 
-  void writeToBuffer(const char* buf, int size);
+ // void writeToBuffer(const char* buf, int size);
 
   void readFromBuffer(std::vector<char>& re, int size);
 
@@ -38,14 +33,11 @@ class TcpBuffer {
 
   void moveWriteIndex(int size);
 
- private:
+private:
   int m_read_index {0};
   int m_write_index {0};
-  int m_size {0};
-
- public:
+  //int m_size {0};
   std::vector<char> m_buffer;
-
 };
 
 

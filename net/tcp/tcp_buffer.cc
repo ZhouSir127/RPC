@@ -2,52 +2,38 @@
 #include <string.h>
 #include "../../common/log.h"
 #include "tcp_buffer.h"
+#include <algorithm>
 
 namespace rocket {
 
-
-
-TcpBuffer::TcpBuffer(int size) : m_size(size) {
-  m_buffer.resize(size);
-}
-
-TcpBuffer::~TcpBuffer() {
-
-}
-
-// 返回可读字节数
-int TcpBuffer::readAble() {
-  return m_write_index - m_read_index;
-}
+TcpBuffer::TcpBuffer(int size) : m_buffer(size)
+{}
 
 // 返回可写的字节数
-int TcpBuffer::writeAble() {
-  return m_buffer.size() - m_write_index;
-}
+// int TcpBuffer::writeAble() const {
+//   return m_buffer.size() - m_write_index;
+// }
 
-int TcpBuffer::readIndex() {
+int TcpBuffer::readIndex() const {
   return m_read_index;
 }
 
-int TcpBuffer::writeIndex() {
+int TcpBuffer::writeIndex() const {
   return m_write_index;
 }
 
 void TcpBuffer::writeToBuffer(const char* buf, int size) {
-  if (size > writeAble()) {
-    // 调整 buffer 的大小，扩容
-    int new_size = (int)(1.5 * (m_write_index + size));
-    resizeBuffer(new_size);
-  }
-  memcpy(&m_buffer[m_write_index], buf, size);
+  if (size > m_buffer.size() - m_write_index)
+    resizeBuffer((m_write_index + size)<<1);
+  
+  std::copy_n(buf,size,m_buffer.begin()+m_write_index);
+//  memcpy(&m_buffer[m_write_index], buf, size);
   m_write_index += size; 
 }
 
-
 void TcpBuffer::readFromBuffer(std::vector<char>& re, int size) {
-  if (readAble() == 0) {
+  if (readAble() == 0)
     return;
-  }
 
   int read_size = readAble() > size ? size : readAble();
 
@@ -60,19 +46,19 @@ void TcpBuffer::readFromBuffer(std::vector<char>& re, int size) {
   adjustBuffer();
 }
 
-
-void TcpBuffer::resizeBuffer(int new_size) {
-  std::vector<char> tmp(new_size);
-  int count = std::min(new_size, readAble());
-  
-  memcpy(&tmp[0], &m_buffer[m_read_index], count);
-  m_buffer.swap(tmp);
-
-  m_read_index = 0;
-  m_write_index = m_read_index + count;
-
+void TcpBuffer::resizeBuffer(int new_size){
+    int relocate  = std::min(new_size,m_write_index - m_read_index);    
+    if (new_size<=m_buffer.capacity() ){
+      memmove(m_buffer.data(),m_buffer.data()+m_read_index,relocate);
+            m_buffer.resize(new_size);
+    }else{
+      std::vector<char> tmp (new_size);
+      std::copy_n(m_buffer.begin() + m_read_index,relocate,tmp.begin() );
+      m_buffer.swap(tmp);
+    }
+    m_read_index = 0;
+    m_write_index = relocate;
 }
-
 
 void TcpBuffer::adjustBuffer() {
   if (m_read_index < int(m_buffer.size() / 3)) {
@@ -107,7 +93,6 @@ void TcpBuffer::moveWriteIndex(int size) {
   }
   m_write_index = j;
   adjustBuffer();
-
 }
 
 }
