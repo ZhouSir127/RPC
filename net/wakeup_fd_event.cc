@@ -5,16 +5,12 @@
 
 namespace rocket {
 
-WakeUpFdEvent::WakeUpFdEvent() {
-    int m_wakeup_fd( eventfd(0, 0) );
+WakeUpFdEvent::WakeUpFdEvent():FdEvent(eventfd(0, 0) ) {
   // if (m_wakeup_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, m_wakeup_fd create error, error info[%d]", errno);
   //   exit(1);
   // }
     // INFOLOG("wakeup fd = %d", m_wakeup_fd);
-  m_fd = m_wakeup_fd;
-  init();
-  
   setCallback(EPOLLIN, [this]() {
     uint64_t dummy;
     if (read(m_fd, &dummy, sizeof(dummy)) == -1 && errno != EAGAIN)

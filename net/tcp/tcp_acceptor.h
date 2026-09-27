@@ -3,28 +3,24 @@
 
 #include <memory>
 #include "net_addr.h"
+#include "../fd_event.h"
 
 namespace rocket {
 
-class TcpAcceptor {
- public:
+class TcpAcceptor:public FdEvent {
+public:
   typedef std::shared_ptr<TcpAcceptor> s_ptr;
 
-  TcpAcceptor(NetAddr::s_ptr local_addr);
-
+  TcpAcceptor(const std::shared_ptr<NetAddr>&local_addr);
   ~TcpAcceptor();
 
-  std::pair<int, NetAddr::s_ptr> accept();
+  std::pair<int, std::shared_ptr<NetAddr>> accept();
 
-  int getListenFd();
+  int getListenFd()const;
 
- private:
-  NetAddr::s_ptr m_local_addr; // 服务端监听的地址，addr -> ip:port 
-
+private:
+  std::shared_ptr<NetAddr> m_local_addr; // 服务端监听的地址，addr -> ip:port 
   int m_family {-1};
-
-  int m_listenfd {-1}; // 监听套接字
-
 };
 
 }

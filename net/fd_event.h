@@ -14,8 +14,7 @@ public:
   using TriggerEvent = uint32_t;
 
   FdEvent(int fd);
-  FdEvent()=default;
-
+  
   const std::function<void()>& handler(TriggerEvent event_type) const;
 
   int getFd() const { return m_fd; }

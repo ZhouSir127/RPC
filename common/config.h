@@ -10,7 +10,7 @@ namespace rocket {
 
 struct RpcStub {
   std::string name;
-  NetAddr::s_ptr addr;
+  std::shared_ptr<NetAddr> addr;
   int timeout {2000};
 };
 

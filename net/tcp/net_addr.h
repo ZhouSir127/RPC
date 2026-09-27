@@ -10,8 +10,7 @@ namespace rocket {
 
 class NetAddr {
 public:
-  typedef std::shared_ptr<NetAddr> s_ptr;
-  
+
   virtual sockaddr* getSockAddr() = 0;
   virtual socklen_t getSockLen() = 0;
   virtual std::string toString() = 0;

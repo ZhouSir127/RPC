@@ -31,7 +31,7 @@ class TcpConnection {
 
 
  public:
-  TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, NetAddr::s_ptr local_addr, TcpConnectionType type = TcpConnectionByServer);
+  TcpConnection(EventLoop* event_loop, int fd, int buffer_size, std::shared_ptr<NetAddr> peer_addr, std::shared_ptr<NetAddr> local_addr, TcpConnectionType type = TcpConnectionByServer);
 
   ~TcpConnection();
 
@@ -64,9 +64,9 @@ class TcpConnection {
 
   void pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
-  NetAddr::s_ptr getLocalAddr();
+  std::shared_ptr<NetAddr> getLocalAddr();
 
-  NetAddr::s_ptr getPeerAddr();
+  std::shared_ptr<NetAddr> getPeerAddr();
 
   void reply(std::vector<AbstractProtocol::s_ptr>& replay_messages);
 
@@ -74,8 +74,8 @@ class TcpConnection {
 
   EventLoop* m_event_loop {NULL};   // 代表持有该连接的 IO 线程
 
-  NetAddr::s_ptr m_local_addr;
-  NetAddr::s_ptr m_peer_addr;
+  std::shared_ptr<NetAddr> m_local_addr;
+  std::shared_ptr<NetAddr> m_peer_addr;
 
   TcpBuffer::s_ptr m_in_buffer;   // 接收缓冲区
   TcpBuffer::s_ptr m_out_buffer;  // 发送缓冲区

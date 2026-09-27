@@ -6,8 +6,17 @@
 
 namespace rocket {
 
-TcpServer::TcpServer(const NetAddr::s_ptr&local_addr) : m_local_addr(local_addr) {
-  init(); 
+TcpServer::TcpServer(const std::shared_ptr<NetAddr>&local_addr) 
+:m_local_addr(local_addr),
+m_main_event_loop(EventLoop::GetCurrentEventLoop() ),  
+m_io_thread_group (Config::GetGlobalConfig()->m_io_threads ), 
+m_listen_fd_event(local_addr)
+{
+  m_listen_fd_event.listen(FdEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
+  m_main_event_loop->addEpollEvent(m_listen_fd_event);
+
+  m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
+	m_main_event_loop->addTimerEvent(m_clear_client_timer_event); 
   //INFOLOG("rocket TcpServer listen sucess on [%s]", m_local_addr->toString().c_str());
 }
 
@@ -20,28 +29,6 @@ TcpServer::~TcpServer() {
     delete m_io_thread_group;
     m_io_thread_group = NULL; 
   }
-  if (m_listen_fd_event) {
-    delete m_listen_fd_event;
-    m_listen_fd_event = NULL;
-  }
-}
-
-
-void TcpServer::init() {
-
-  m_acceptor = std::make_shared<TcpAcceptor>(m_local_addr);
-
-  m_main_event_loop = EventLoop::GetCurrentEventLoop();
-  m_io_thread_group = new IOThreadGroup(Config::GetGlobalConfig()->m_io_threads);
-
-  m_listen_fd_event = new FdEvent(m_acceptor->getListenFd());
-  m_listen_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));
-  
-  m_main_event_loop->addEpollEvent(m_listen_fd_event);
-
-  m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
-	m_main_event_loop->addTimerEvent(m_clear_client_timer_event);
-
 }
 
 

@@ -7,15 +7,12 @@
 
 namespace rocket {
 
-Timer::Timer() {
-  int m_timer_fd = timerfd_create(CLOCK_MONOTONIC,0);
+Timer::Timer():FdEvent(timerfd_create(CLOCK_MONOTONIC,0) ) {
     // if(m_timer_fd < 0){
   //   ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
   //   exit(1);
   // }
 //  DEBUGLOG("timer fd=%d", m_fd);
-    m_fd = m_timer_fd;
-    init();
   // 优化：放弃旧的 std::bind，使用现代 C++ Lambda 表达式，不仅可读性强而且执行更快
   setCallback(EPOLLIN, [this]() {
     onTimer();
