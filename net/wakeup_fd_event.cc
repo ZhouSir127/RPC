@@ -2,10 +2,11 @@
 #include "wakeup_fd_event.h"
 #include "../common/log.h"
 #include <sys/eventfd.h>
+#include "eventloop.h"
 
 namespace rocket {
 
-WakeUpFdEvent::WakeUpFdEvent():FdEvent(eventfd(0, 0) ) {
+WakeUpFdEvent::WakeUpFdEvent(EventLoop*event_loop):FdEvent(eventfd(0, 0),event_loop) {
   // if (m_wakeup_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, m_wakeup_fd create error, error info[%d]", errno);
   //   exit(1);
@@ -16,10 +17,6 @@ WakeUpFdEvent::WakeUpFdEvent():FdEvent(eventfd(0, 0) ) {
     if (read(m_fd, &dummy, sizeof(dummy)) == -1 && errno != EAGAIN)
       DEBUGLOG("read full bytes from wakeup fd[%d]", m_fd);
   });
-}
-
-WakeUpFdEvent::~WakeUpFdEvent(){
-  close(m_fd);
 }
 
 void WakeUpFdEvent::wakeup() {

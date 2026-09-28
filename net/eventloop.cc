@@ -22,7 +22,6 @@ void EventLoop::add(FdEvent* fdEvent) {
   // }
 }
 
-
 void EventLoop::modify(FdEvent* fdEvent){
   
   int rt = epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD , fdEvent -> getFd() , fdEvent->getEpollEvent() );
@@ -46,15 +45,15 @@ void EventLoop::Delete(FdEvent* event) {
 
 EventLoop::EventLoop() 
     : m_thread_id(std::this_thread::get_id() ), 
-      m_epoll_fd(epoll_create(1) )
+      m_epoll_fd(epoll_create(1) ),
+      m_wakeup_fd_event(this),
+      m_timer(this)
       //m_timer_fd ( ) 
 {
   // if (m_epoll_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
   //   exit(1);
   // }
-  add(&m_wakeup_fd_event);
-  add(&m_timer);
   // std::stringstream ss;
   // ss << m_thread_id;
   // INFOLOG("succ create event loop in thread %s", ss.str().c_str());

@@ -13,6 +13,8 @@
 
 namespace rocket {
 
+class FdEvent;
+
 class EventLoop {
 public:
   // 核心：提供获取当前线程独占单例的静态入口
@@ -46,7 +48,6 @@ private:
   void modify(FdEvent*event);
   void Delete(FdEvent* event);
 
-private:
   const std::thread::id m_thread_id;
   const int m_epoll_fd;
   WakeUpFdEvent m_wakeup_fd_event;

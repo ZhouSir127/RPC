@@ -4,7 +4,7 @@
 
 namespace rocket {
 
-IOThreadGroup::IOThreadGroup(int size) {
+IOThreadGroup::IOThreadGroup(int size){
   m_io_thread_groups.resize(size);
   for (int i = 0; i < size; ++i)
     m_io_thread_groups[i] = std::make_unique<IOThread>();

@@ -27,7 +27,6 @@ class TcpClient {
   // 如果发送 message 成功，会调用 done 函数， 函数的入参就是 message 对象 
   void writeMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
 
-
   // 异步的读取 message
   // 如果读取 message 成功，会调用 done 函数， 函数的入参就是 message 对象 
   void readMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
@@ -38,9 +37,9 @@ class TcpClient {
 
   std::string getConnectErrorInfo();
 
-  NetAddr::s_ptr getPeerAddr();
+  std::shared_ptr<NetAddr> getPeerAddr();
 
-  NetAddr::s_ptr getLocalAddr();
+  std::shared_ptr<NetAddr> getLocalAddr();
 
   void initLocalAddr();
 
@@ -48,8 +47,8 @@ class TcpClient {
 
 
  private:
-  NetAddr::s_ptr m_peer_addr;
-  NetAddr::s_ptr m_local_addr;
+  std::shared_ptr<NetAddr> m_peer_addr;
+  std::shared_ptr<NetAddr> m_local_addr;
 
   EventLoop* m_event_loop {NULL};
 

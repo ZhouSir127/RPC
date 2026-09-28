@@ -1,30 +1,27 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
-#include "rocket/common/log.h"
-#include "rocket/net/tcp/tcp_client.h"
-#include "rocket/net/eventloop.h"
-#include "rocket/net/fd_event_group.h"
-#include "rocket/common/error_code.h"
-#include "rocket/net/tcp/net_addr.h"
+#include "../../common/log.h"
+#include "tcp_client.h"
+#include "../eventloop.h"
+#include "../fd_event_group.h"
+#include "../../common/error_code.h"
+#include "net_addr.h"
 
 namespace rocket {
 
-TcpClient::TcpClient(NetAddr::s_ptr peer_addr) : m_peer_addr(peer_addr) {
+TcpClient::TcpClient(const std::shared_ptr<NetAddr>& peer_addr) : m_peer_addr(peer_addr) {
   m_event_loop = EventLoop::GetCurrentEventLoop();
   m_fd = socket(peer_addr->getFamily(), SOCK_STREAM, 0);
-
-  if (m_fd < 0) {
-    ERRORLOG("TcpClient::TcpClient() error, failed to create fd");
-    return;
-  }
-
+  // if (m_fd < 0) {
+  //   ERRORLOG("TcpClient::TcpClient() error, failed to create fd");
+  //   return;
+  // }
   m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(m_fd);
   m_fd_event->setNonBlock();
 
   m_connection = std::make_shared<TcpConnection>(m_event_loop, m_fd, 128, peer_addr, nullptr, TcpConnectionByClient);
   m_connection->setConnectionType(TcpConnectionByClient);
- 
 }
 
 TcpClient::~TcpClient() {
@@ -149,7 +146,6 @@ void TcpClient::initLocalAddr() {
   }
 
   m_local_addr = std::make_shared<IPNetAddr>(local_addr);
-
 }
 
 

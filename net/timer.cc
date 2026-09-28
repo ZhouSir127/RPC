@@ -7,7 +7,7 @@
 
 namespace rocket {
 
-Timer::Timer():FdEvent(timerfd_create(CLOCK_MONOTONIC,0) ) {
+Timer::Timer(EventLoop*event_loop):FdEvent(timerfd_create(CLOCK_MONOTONIC,0),event_loop) {
     // if(m_timer_fd < 0){
   //   ERRORLOG("failed to create event loop, m_timer_fd create error, error info[%d]", errno);
   //   exit(1);
@@ -17,10 +17,6 @@ Timer::Timer():FdEvent(timerfd_create(CLOCK_MONOTONIC,0) ) {
   setCallback(EPOLLIN, [this]() {
     onTimer();
   });
-}
-
-Timer::~Timer(){
-  close(m_fd);
 }
 
 void Timer::onTimer() {

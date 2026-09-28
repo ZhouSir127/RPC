@@ -1,101 +1,88 @@
+// tcp_connection.h
 #ifndef ROCKET_NET_TCP_TCP_CONNECTION_H
 #define ROCKET_NET_TCP_TCP_CONNECTION_H
 
-#include <memory>
+#include <atomic>
+#include <functional>
 #include <map>
-#include <queue>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "../fd_event.h"
+#include "../eventloop.h"
+#include "../coder/abstract_coder.h"
 #include "net_addr.h"
 #include "tcp_buffer.h"
-#include "../io_thread.h"
-#include "../coder/abstract_coder.h"
-#include "../rpc/rpc_dispatcher.h"
 
 namespace rocket {
 
 enum TcpState {
-  NotConnected = 1,
-  Connected = 2,
-  HalfClosing = 3,
-  Closed = 4,
+    NotConnected = 1,
+    Connected,
+    HalfClosing,
+    Closed
 };
 
 enum TcpConnectionType {
-  TcpConnectionByServer = 1,  // 作为服务端使用，代表跟对端客户端的连接
-  TcpConnectionByClient = 2,  // 作为客户端使用，代表跟对赌服务端的连接
+    TcpConnectionByServer = 1,
+    TcpConnectionByClient
 };
 
-class TcpConnection {
- public:
+class TcpConnection : public FdEvent {
+public:
+    using s_ptr = std::shared_ptr<TcpConnection>;
 
-  typedef std::shared_ptr<TcpConnection> s_ptr;
+    TcpConnection(int fd, EventLoop* event_loop,int buffer_size,
+                  std::shared_ptr<NetAddr> peer_addr,
+                  std::shared_ptr<NetAddr> local_addr,
+                  TcpConnectionType type= TcpConnectionByServer);
+    ~TcpConnection();
 
+    TcpConnection(const TcpConnection&) = delete;
+    TcpConnection& operator=(const TcpConnection&) = delete;
+    TcpConnection(TcpConnection&&) = delete;
+    TcpConnection& operator=(TcpConnection&&) = delete;
 
- public:
-  TcpConnection(EventLoop* event_loop, int fd, int buffer_size, std::shared_ptr<NetAddr> peer_addr, std::shared_ptr<NetAddr> local_addr, TcpConnectionType type = TcpConnectionByServer);
+    void onRead();
+    void excute();
+    void onWrite();
+    void reply(std::vector<AbstractProtocol::s_ptr>& messages);
 
-  ~TcpConnection();
+    void listenRead();
+    void listenWrite();
+    void clear();
+    void shutdown();
 
-  void onRead();
+    void setState(TcpState state);
+    TcpState getState() const;
 
-  void excute();
+    void setConnectionType(TcpConnectionType type);
+    void pushSendMessage(AbstractProtocol::s_ptr message,
+                         std::function<void(AbstractProtocol::s_ptr)> done);
+    void pushReadMessage(const std::string& msg_id,
+                         std::function<void(AbstractProtocol::s_ptr)> done);
 
-  void onWrite();
-
-  void setState(const TcpState state);
-
-  TcpState getState();
-
-  void clear();
-
-  int getFd();
-
-  // 服务器主动关闭连接
-  void shutdown();
-
-  void setConnectionType(TcpConnectionType type);
-
-  // 启动监听可写事件
-  void listenWrite();
-
-  // 启动监听可读事件
-  void listenRead();
-
-  void pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
-
-  void pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
-
-  std::shared_ptr<NetAddr> getLocalAddr();
-
-  std::shared_ptr<NetAddr> getPeerAddr();
-
-  void reply(std::vector<AbstractProtocol::s_ptr>& replay_messages);
+    std::shared_ptr<NetAddr> getLocalAddr() const;
+    std::shared_ptr<NetAddr> getPeerAddr() const;
+    // getFd() 直接使用继承自 FdEvent 的版本。
 
 private:
-  EventLoop* m_event_loop {NULL};   // 代表持有该连接的 IO 线程
+    std::shared_ptr<NetAddr> m_peer_addr;
+    std::shared_ptr<NetAddr> m_local_addr;
 
-  std::shared_ptr<NetAddr> m_local_addr;
-  std::shared_ptr<NetAddr> m_peer_addr;
+    TcpBuffer m_in_buffer;
+    TcpBuffer m_out_buffer;
+    std::unique_ptr<AbstractCoder> m_coder;
 
-  TcpBuffer::s_ptr m_in_buffer;   // 接收缓冲区
-  TcpBuffer::s_ptr m_out_buffer;  // 发送缓冲区
+    std::atomic<TcpState> m_state{NotConnected};
+    TcpConnectionType m_connection_type;
 
-  FdEvent* m_fd_event {NULL};
-
-  AbstractCoder* m_coder {NULL};
-
-  TcpState m_state;
-
-  int m_fd {0};
-
-  TcpConnectionType m_connection_type {TcpConnectionByServer};
-
-  // std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>
-  std::vector<std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>> m_write_dones;
-
-  // key 为 msg_id
-  std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
+    std::vector<std::pair<AbstractProtocol::s_ptr,
+                          std::function<void(AbstractProtocol::s_ptr)>>> m_write_dones;
+    std::map<std::string,std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
 };
 
-}
-
+}  // namespace rocket
 #endif

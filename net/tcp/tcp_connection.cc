@@ -7,30 +7,47 @@
 
 namespace rocket {
 
-TcpConnection::TcpConnection(EventLoop* event_loop, int fd, 
-int buffer_size, std::shared_ptr<NetAddr> peer_addr, std::shared_ptr<NetAddr> local_addr, TcpConnectionType type /*= TcpConnectionByServer*/)
-: m_event_loop(event_loop), m_local_addr(local_addr), m_peer_addr(peer_addr), m_state(NotConnected), m_fd(fd), m_connection_type(type) {
-    
-  m_in_buffer = std::make_shared<TcpBuffer>(buffer_size);
-  m_out_buffer = std::make_shared<TcpBuffer>(buffer_size);
-
-  m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(fd);
-  m_fd_event->setNonBlock();
-
-  m_coder = new TinyPBCoder();
-
-  if (m_connection_type == TcpConnectionByServer) {
-    listenRead();
-  }
-
+TcpConnection::TcpConnection(int fd,EventLoop* event_loop, int buffer_size,
+                             std::shared_ptr<NetAddr> peer_addr,
+                             std::shared_ptr<NetAddr> local_addr,
+                             TcpConnectionType type)
+    : FdEvent(fd,event_loop),
+      m_peer_addr(peer_addr),
+      m_local_addr(local_addr),
+      m_in_buffer(buffer_size),
+      m_out_buffer(buffer_size),
+      m_coder(std::make_unique<TinyPBCoder>()),
+      m_connection_type(type) 
+{
+    // 你当前的 FdEvent(fd) 已经设置非阻塞，并设置 data.ptr = this。
+    setCallback(EPOLLIN, [this] { onRead(); });
 }
 
-TcpConnection::~TcpConnection() {
-  //DEBUGLOG("~TcpConnection");
-  if (m_coder) {
-    delete m_coder;
-    m_coder = NULL;
-  }
+void TcpConnection::listenRead() {
+    setCallback(EPOLLIN, [this] { onRead(); });
+    m_event_loop->addEpollEvent(this);
+}
+
+void TcpConnection::listenWrite() {
+    setCallback(EPOLLOUT, [this] { onWrite(); });
+    m_event_loop->addEpollEvent(this);
+}
+
+void TcpConnection::clear() {
+    if (m_state.load() == Closed) 
+      return;
+
+    cancel(EPOLLIN);
+    cancel(EPOLLOUT);
+    m_state.store(Closed);
+}
+
+void TcpConnection::setState(TcpState state) {
+    m_state.store(state);  // 注意使用传入的 state
+}
+
+TcpState TcpConnection::getState() const {
+    return m_state.load();
 }
 
 void TcpConnection::onRead() {
@@ -142,7 +159,6 @@ void TcpConnection::onWrite() {
     for (size_t i = 0; i< m_write_dones.size(); ++i)
       messages.push_back(m_write_dones[i].first);
     
-
     m_coder->encode(messages, m_out_buffer);
   }
 
@@ -171,7 +187,7 @@ void TcpConnection::onWrite() {
     // }
   }
   if (is_write_all) {
-    m_fd_event->cancle(FdEvent::OUT_EVENT);
+    m_fd_event->cancle(EPOLLIN);
     m_event_loop->addEpollEvent(m_fd_event);
   }
 
@@ -183,33 +199,9 @@ void TcpConnection::onWrite() {
   }
 }
 
-void TcpConnection::setState(const TcpState state) {
-  m_state = Connected;
-}
-
-TcpState TcpConnection::getState() {
-  return m_state;
-}
-
-void TcpConnection::clear() {
-  // 处理一些关闭连接后的清理动作
-  if (m_state == Closed) {
-    return;
-  }
-  m_fd_event->cancle(FdEvent::IN_EVENT);
-  m_fd_event->cancle(FdEvent::OUT_EVENT);
-
-  m_event_loop->deleteEpollEvent(m_fd_event);
-
-  m_state = Closed;
-
-}
-
 void TcpConnection::shutdown() {
-  if (m_state == Closed || m_state == NotConnected) {
+  if (m_state == Closed || m_state == NotConnected)
     return;
-  }
-
   // 处于半关闭
   m_state = HalfClosing;
 
@@ -217,28 +209,11 @@ void TcpConnection::shutdown() {
   // 发送 FIN 报文， 触发了四次挥手的第一个阶段
   // 当 fd 发生可读事件，但是可读的数据为0，即 对端发送了 FIN
   ::shutdown(m_fd, SHUT_RDWR);
-
 }
-
 
 void TcpConnection::setConnectionType(TcpConnectionType type) {
   m_connection_type = type;
 }
-
-
-void TcpConnection::listenWrite() {
-
-  m_fd_event->setCallback(EPOLLOUT, std::bind(&TcpConnection::onWrite, this));
-  m_event_loop->addEpollEvent(m_fd_event);
-}
-
-
-void TcpConnection::listenRead() {
-
-  m_fd_event->listen(EPOLLIN, std::bind(&TcpConnection::onRead, this));
-  m_event_loop->addEpollEvent(m_fd_event);
-}
-
 
 void TcpConnection::pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done) {
   m_write_dones.push_back(std::make_pair(message, done));
@@ -246,20 +221,6 @@ void TcpConnection::pushSendMessage(AbstractProtocol::s_ptr message, std::functi
 
 void TcpConnection::pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done) {
   m_read_dones.insert(std::make_pair(msg_id, done));
-}
-
-
-std::shared_ptr<NetAddr> TcpConnection::getLocalAddr() {
-  return m_local_addr;
-}
-
-std::shared_ptr<NetAddr> TcpConnection::getPeerAddr() {
-  return m_peer_addr;
-}
-
-
-int TcpConnection::getFd() {
-  return m_fd;
 }
 
 }

@@ -11,18 +11,13 @@ class TcpAcceptor:public FdEvent {
 public:
   typedef std::shared_ptr<TcpAcceptor> s_ptr;
 
-  TcpAcceptor(const std::shared_ptr<NetAddr>&local_addr,std::function<void()>f);
-  ~TcpAcceptor();
+  TcpAcceptor(EventLoop*event_loop,const std::shared_ptr<NetAddr>&local_addr,std::function<void()>callback);
 
   std::pair<int, std::shared_ptr<NetAddr>> accept();
 
-  int getListenFd()const;
-
 private:
-
   std::shared_ptr<NetAddr> m_local_addr; // 服务端监听的地址，addr -> ip:port 
   int m_family {-1};
-
 };
 
 }

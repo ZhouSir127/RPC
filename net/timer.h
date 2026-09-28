@@ -9,8 +9,7 @@
 namespace rocket {
 class Timer : public FdEvent {
 public:
-  Timer();
-  ~Timer();
+  Timer(EventLoop*event_loop);
   void addTimerEvent(TimerEvent event);
   void deleteTimerEvent(const TimerEvent& event);
   void onTimer(); // 当发生了 IO 事件后，EventLoop 会执行这个回调函数

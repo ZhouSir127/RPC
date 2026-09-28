@@ -5,12 +5,12 @@
 #include "../../common/log.h"
 #include "net_addr.h"
 #include "tcp_acceptor.h"
-
+#include "../eventloop.h"
 
 namespace rocket {
 
-TcpAcceptor::TcpAcceptor(const std::shared_ptr<NetAddr>&local_addr,std::function<void()>f) : 
-FdEvent(socket(local_addr->getSockAddr()->sa_family, SOCK_STREAM, 0)),
+TcpAcceptor::TcpAcceptor(EventLoop*event_loop,const std::shared_ptr<NetAddr>&local_addr,std::function<void()>callback) : 
+FdEvent(socket(local_addr->getSockAddr()->sa_family, SOCK_STREAM, 0),event_loop),
 m_local_addr(local_addr),
 m_family(m_local_addr->getSockAddr()->sa_family)
 {
@@ -37,22 +37,14 @@ m_family(m_local_addr->getSockAddr()->sa_family)
     // exit(0);
   }
 
-  setCallback(EPOLLIN,std::move(f) );
-}
-
-TcpAcceptor::~TcpAcceptor(){
-  close(m_fd);
-}
-
-int TcpAcceptor::getListenFd()const {
-  return m_fd;
+  setCallback(EPOLLIN,std::move(callback));
 }
 
 std::pair<int, std::shared_ptr<NetAddr> > TcpAcceptor::accept() {
   if (m_family == AF_INET) {
     sockaddr_in client_addr;
     memset(&client_addr, 0, sizeof(client_addr));
-    socklen_t clien_addr_len = sizeof(clien_addr_len);
+    socklen_t clien_addr_len = sizeof(client_addr);
 
     int client_fd = ::accept(m_fd, reinterpret_cast<sockaddr*>(&client_addr), &clien_addr_len);
     // if (client_fd < 0) {
@@ -65,7 +57,5 @@ std::pair<int, std::shared_ptr<NetAddr> > TcpAcceptor::accept() {
     return std::make_pair(-1, nullptr);
   }
 }
-
-
 
 }

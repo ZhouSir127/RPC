@@ -21,7 +21,7 @@ public:
 
   int writeIndex() const ;
 
- // void writeToBuffer(const char* buf, int size);
+  void writeToBuffer(const char* buf, int size);
 
   void readFromBuffer(std::vector<char>& re, int size);
 
