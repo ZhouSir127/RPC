@@ -8,8 +8,8 @@
 namespace rocket {
 
 TcpConnection::TcpConnection(int fd,EventLoop* event_loop, int buffer_size,
-                             std::shared_ptr<NetAddr> peer_addr,
-                             std::shared_ptr<NetAddr> local_addr,
+                            const std::shared_ptr<NetAddr>& peer_addr,
+                            const std::shared_ptr<NetAddr>& local_addr,
                              TcpConnectionType type)
     : FdEvent(fd,event_loop),
       m_peer_addr(peer_addr),
@@ -18,8 +18,7 @@ TcpConnection::TcpConnection(int fd,EventLoop* event_loop, int buffer_size,
       m_out_buffer(buffer_size),
       m_coder(std::make_unique<TinyPBCoder>()),
       m_connection_type(type) 
-{
-    // 你当前的 FdEvent(fd) 已经设置非阻塞，并设置 data.ptr = this。
+{    // 你当前的 FdEvent(fd) 已经设置非阻塞，并设置 data.ptr = this。
     setCallback(EPOLLIN, [this] { onRead(); });
 }
 
@@ -34,7 +33,7 @@ void TcpConnection::listenWrite() {
 }
 
 void TcpConnection::clear() {
-    if (m_state.load() == Closed) 
+    if (m_state == Closed) 
       return;
 
     cancel(EPOLLIN);
@@ -43,62 +42,46 @@ void TcpConnection::clear() {
 }
 
 void TcpConnection::setState(TcpState state) {
-    m_state.store(state);  // 注意使用传入的 state
+    m_state = state;  // 注意使用传入的 state
 }
 
 TcpState TcpConnection::getState() const {
-    return m_state.load();
+    return m_state;
 }
-
 void TcpConnection::onRead() {
-  // 1. 从 socket 缓冲区，调用 系统的 read 函数读取字节 in_buffer 里面
+    if (getState() != Connected)
+        return;
+    
+    bool received_data = false;
+    bool peer_closed = false;
 
-  // if (m_state != Connected) {
-  //   ERRORLOG("onRead error, client has already disconneced, addr[%s], clientfd[%d]", m_peer_addr->toString().c_str(), m_fd);
-  //   return;
-  // }
+    while(true) {
+        int n = m_in_buffer.readFd(getFd());
 
-  bool is_read_all = false;
-  bool is_close = false;
-  while(!is_read_all) {
-    if (m_in_buffer->writeAble() == 0) {
-      m_in_buffer->resizeBuffer(2 * m_in_buffer->m_buffer.size());
+        if (n > 0) {
+            received_data = true;
+            continue;  // 继续读，直到当前没有更多数据
+        }
+        if (n == 0) {
+            peer_closed = true;
+            break;
+        }
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            break;  // 非阻塞 socket 当前读空了
+        
+        // 其他读取错误；readFd() 已负责重试 EINTR
+        //ERRORLOG("read failed, fd=%d, errno=%d", getFd(), errno);
+        clear();
+        return;
     }
-    int read_count = m_in_buffer->writeAble();
-    int write_index = m_in_buffer->writeIndex(); 
 
-    int rt = read(m_fd, &(m_in_buffer->m_buffer[write_index]), read_count);
-    DEBUGLOG("success read %d bytes from addr[%s], client fd[%d]", rt, m_peer_addr->toString().c_str(), m_fd);
-    if (rt > 0) {
-      m_in_buffer->moveWriteIndex(rt);
-      if (rt == read_count) {
-        continue;
-      } else if (rt < read_count) {
-        is_read_all = true;
-        break;
-      }
-    } else if (rt == 0) {
-      is_close = true;
-      break;
-    } else if (rt == -1 && errno == EAGAIN) {
-      is_read_all = true;
-      break;
+    if (received_data) {
+        excute();  // 从 m_in_buffer 解码并处理消息
     }
-  }
 
-  if (is_close) {
-    //TODO: 
-    //INFOLOG("peer closed, peer addr [%s], clientfd [%d]", m_peer_addr->toString().c_str(), m_fd);
-    clear();
-    return;
-  }
-
-  //if (!is_read_all) {
-  //  ERRORLOG("not read all data");
-  //}
-
-  // TODO: 简单的 echo, 后面补充 RPC 协议解析 
-  excute();
+    if (peer_closed) {
+        clear();
+    }
 }
 
 void TcpConnection::excute() {

@@ -15,8 +15,6 @@ public:
   TcpBuffer(int size);
   // 返回可读字节数
   // 返回可写的字节数
-  int writeAble() const ;
-
   int readIndex() const ;
 
   int writeIndex() const ;
@@ -32,6 +30,8 @@ public:
   void moveReadIndex(int size);
 
   void moveWriteIndex(int size);
+  // tcp_buffer.h
+  int readFd(int fd);
 
 private:
   int m_read_index {0};

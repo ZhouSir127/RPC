@@ -19,24 +19,24 @@
 namespace rocket {
 
 enum TcpState {
-    NotConnected = 1,
+    NotConnected = 0,
     Connected,
     HalfClosing,
     Closed
 };
 
 enum TcpConnectionType {
-    TcpConnectionByServer = 1,
+    TcpConnectionByServer = 0,
     TcpConnectionByClient
 };
 
 class TcpConnection : public FdEvent {
 public:
-    using s_ptr = std::shared_ptr<TcpConnection>;
+    //using s_ptr = std::shared_ptr<TcpConnection>;
 
     TcpConnection(int fd, EventLoop* event_loop,int buffer_size,
-                  std::shared_ptr<NetAddr> peer_addr,
-                  std::shared_ptr<NetAddr> local_addr,
+                  const std::shared_ptr<NetAddr>& peer_addr,
+                  const std::shared_ptr<NetAddr>& local_addr,
                   TcpConnectionType type= TcpConnectionByServer);
     ~TcpConnection();
 

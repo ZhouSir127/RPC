@@ -24,10 +24,8 @@ void TcpServer::onAccept() {
 
   EventLoop* io_loop = m_io_thread_group.getIOThread()->getEventLoop();
   auto [it, inserted] = m_client.try_emplace(client_fd, client_fd , io_loop, 128, peer_addr, m_local_addr);
-  if (inserted){
+  if (inserted)
       it->second.setState(Connected);
-      io_loop->addEpollEvent(&(it->second) );
-  }
 }
 
 void TcpServer::start() {

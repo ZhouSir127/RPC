@@ -15,7 +15,7 @@ class TcpClient {
  public:
   typedef std::shared_ptr<TcpClient> s_ptr;
 
-  TcpClient(std::shared_ptr<NetAddr> peer_addr);
+  TcpClient(const std::shared_ptr<NetAddr>& peer_addr);
 
   ~TcpClient();
 

@@ -1,7 +1,6 @@
 #ifndef ROCKET_NET_IO_THREAD_GROUP_H
 #define ROCKET_NET_IO_THREAD_GROUP_H
 
-#include <vector>
 #include <memory>
 #include "../common/log.h"
 #include "io_thread.h"
@@ -15,12 +14,13 @@ public:
 
   void start() const;
 
-  void join() const;
+  void stop() const;
 
   IOThread* getIOThread();
 
 private:
-  std::vector<std::unique_ptr<IOThread>> m_io_thread_groups;
+  std::unique_ptr<IOThread[]> m_io_thread_groups;
+  int m_size;
   int m_index{0};
 };
 

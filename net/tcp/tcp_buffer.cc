@@ -79,4 +79,18 @@ void TcpBuffer::moveWriteIndex(int size) {
   adjustBuffer();
 }
 
+// tcp_buffer.cc
+int TcpBuffer::readFd(int fd) {
+    char temp[8192];
+    int n;
+    do
+      n = read(fd, temp, sizeof(temp));
+    while (n < 0 && errno == EINTR);
+
+    if (n > 0)
+        writeToBuffer(temp, n);
+
+    return n;
+}
+
 }
