@@ -19,7 +19,7 @@ public:
 
   FdEvent(int fd,EventLoop*event_loop);
   virtual ~FdEvent();
-  const std::function<void()>& handler(TriggerEvent event_type) const;
+  const std::function<void()>& getCallBack(TriggerEvent event_type) const;
 
   int getFd() const { return m_fd; }
   epoll_event* getEpollEvent() { return &m_listen_events; }
@@ -29,7 +29,6 @@ protected:
   int m_fd{-1};
   epoll_event m_listen_events;
   
-  void init();
   void setCallback(TriggerEvent event_type, std::function<void()> callback);
   void cancel(TriggerEvent event_type);
 

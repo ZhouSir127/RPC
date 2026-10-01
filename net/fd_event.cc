@@ -14,11 +14,11 @@ FdEvent::FdEvent(int fd,EventLoop*event_loop):m_fd(fd),m_event_loop(event_loop){
 }
 
 FdEvent::~FdEvent(){
-  close(m_fd);
   m_event_loop->deleteEpollEvent(this);
+  close(m_fd);
 }
 
-const std::function<void()>& FdEvent::handler(TriggerEvent event) const {
+const std::function<void()>& FdEvent::getCallBack(TriggerEvent event) const {
   switch (event) { 
     case EPOLLIN:
       return m_read_callback;
@@ -30,6 +30,9 @@ const std::function<void()>& FdEvent::handler(TriggerEvent event) const {
 }
 
 void FdEvent::setCallback(TriggerEvent event_type, std::function<void()> callback) {
+    if (!callback)
+      return;  
+
     m_listen_events.events |= event_type;
     
     switch(event_type){
@@ -44,7 +47,7 @@ void FdEvent::setCallback(TriggerEvent event_type, std::function<void()> callbac
     }
 }
 
-inline void FdEvent::cancel(TriggerEvent event_type) {
+void FdEvent::cancel(TriggerEvent event_type) {
     m_listen_events.events &= ~event_type;
 }
 

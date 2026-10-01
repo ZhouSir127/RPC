@@ -26,20 +26,19 @@ void Timer::onTimer() {
 
   int64_t now = getNowMs();
   std::vector<TimerEvent> tmps;
-
-  {// 替换为标准的 std::unique_lock
-    std::unique_lock<std::mutex> lock(m_mutex);
-    
-    auto it = m_pending_events.begin();
-    while (it != m_pending_events.end() && it->first <= now) {
-      if (it->second.isCanceled() == false)
-        tmps.push_back(std::move(it->second) );
-        // 优化：直接存回调，不再需要 std::pair，节省内存
-      ++it;
-    }    
-    // 批量删除已到期的事件
-    m_pending_events.erase(m_pending_events.begin(), it);
-  } // 提前释放锁
+  
+  m_mutex.lock();
+  auto it = m_pending_events.begin();
+  while (it != m_pending_events.end() && it->first <= now) {
+    if (it->second.isCanceled() == false)
+      tmps.push_back(std::move(it->second) );
+      // 优化：直接存回调，不再需要 std::pair，节省内存
+    ++it;
+  }    
+  // 批量删除已到期的事件
+  
+  m_pending_events.erase(m_pending_events.begin(), it);
+  m_mutex.unlock();
 
   // 处理重复任务：需要重新调整时间并加回红黑树
   for (TimerEvent& event : tmps){
@@ -57,20 +56,28 @@ void Timer::onTimer() {
 }
 
 void Timer::resetTimer() {
-  {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    if (m_pending_events.empty() )
-      return;
-    // 🚀 核心修复：坚决不进行 map 拷贝，直接 $O(1)$ 取出红黑树顶部的最小时间戳！
-    int64_t next_arrive_time = m_pending_events.begin()->second.getArriveTime();
-    if (next_arrive_time == m_arrive_time)
-      return;    
-    m_arrive_time = next_arrive_time;
-  } // 拿到时间戳后立刻释放锁
 
-  uint64_t now = getNowMs();
-  if( now > m_arrive_time )
-    m_arrive_time = now+100;
+  m_mutex.lock();
+
+  if (m_pending_events.empty() ){
+    m_mutex.unlock();
+    return;
+  }// 🚀 核心修复：坚决不进行 map 拷贝，直接 $O(1)$ 取出红黑树顶部的最小时间戳！
+  int64_t next_arrive_time = m_pending_events.begin()->second.getArriveTime();
+
+  m_mutex.unlock();
+  
+  uint64_t now = getNowMs();    
+    
+  if(now > next_arrive_time){
+    if(m_arrive_time >= now)
+      return;
+    m_arrive_time = now + 100;
+  }else if (next_arrive_time == m_arrive_time)
+    return;
+  else
+    m_arrive_time = next_arrive_time;
+   // 拿到时间戳后立刻释放锁
 
     // 如果算出来的时间在过去，立刻设置 100ms 兜底缓冲，防止立即触发导致的死循环
   itimerspec value;
@@ -88,11 +95,10 @@ void Timer::resetTimer() {
 }
 
 void Timer::addTimerEvent(TimerEvent event){
-  {
-    std::unique_lock<std::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
     // 如果新加进来的定时器比当前树里的所有定时器都早，就必须重置底层硬件定时器    
-    m_pending_events.emplace(event.getArriveTime(), std::move(event) );
-  } // 提前释放锁
+  m_pending_events.emplace(event.getArriveTime(), std::move(event) );
+   // 提前释放锁
 }
 
 void Timer::deleteTimerEvent(const TimerEvent& event) {

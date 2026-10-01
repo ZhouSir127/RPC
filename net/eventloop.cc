@@ -48,7 +48,6 @@ EventLoop::EventLoop()
       m_epoll_fd(epoll_create(1) ),
       m_wakeup_fd_event(this),
       m_timer(this)
-      //m_timer_fd ( ) 
 {
   // if (m_epoll_fd < 0 ) {
   //   ERRORLOG("failed to create event loop, epoll_create error, error info[%d]", errno);
@@ -67,56 +66,46 @@ void EventLoop::addTimerEvent(TimerEvent event) {
   m_timer.addTimerEvent(std::move(event) );
   m_timer.resetTimer();
 }
-//???
 
 void EventLoop::loop() {
   while (m_stop_flag == false) {
-    // 1. 处理异步任务队列
-    std::queue<std::function<void()>> tmp_tasks;
-    {
-      std::unique_lock<std::mutex> lock(m_mutex);
-      m_pending_tasks.swap(tmp_tasks);
-    } // 锁的作用域被精确控制，尽早释放
-
-    while (tmp_tasks.empty() == false) {
-      if (tmp_tasks.front() )
-        tmp_tasks.front()();
-      tmp_tasks.pop();
-    }
-
-    constexpr int g_epoll_max_timeout = 10000;
-    constexpr int g_epoll_max_events = 10;
-
     // 2. epoll 等待 IO 事件
-    epoll_event result_events[g_epoll_max_events];
-    int rt = epoll_wait(m_epoll_fd, result_events, g_epoll_max_events, g_epoll_max_timeout);
+    epoll_event result_events[10];
+    int rt = epoll_wait(m_epoll_fd, result_events, 10 , 10000);
 
     // if (rt < 0) {
     //   if (errno == EINTR) { continue; } // 被信号打断，正常继续
     //   ERRORLOG("epoll_wait error, errno=%d, error=%s", errno, strerror(errno));
     // } else 
     //{
-      for (epoll_event&trigger_event:result_events) {
-        FdEvent* fd_event = static_cast<FdEvent*>(trigger_event.data.ptr);
+      for (int i = 0;i < rt;++i) {
+        FdEvent* fd_event = static_cast<FdEvent*>(result_events[i].data.ptr);
         // if (fd_event == nullptr)
         //   continue;
-
         // 直接提取对应底层宏的回调
-        if (trigger_event.events & EPOLLIN)
-          addTask(fd_event->handler(EPOLLIN));
+        if (result_events[i].events & EPOLLIN)
+          addTask(fd_event->getCallBack(EPOLLIN));
         
-        if (trigger_event.events & EPOLLOUT)
-          addTask(fd_event->handler(EPOLLOUT));
+        if (result_events[i].events & EPOLLOUT)
+          addTask(fd_event->getCallBack(EPOLLOUT));
         
         // 包含 EPOLLHUP 与 EPOLLERR 异常情况的安全清理
-        if (trigger_event.events & (EPOLLERR | EPOLLHUP)) {
+        if (result_events[i].events & (EPOLLERR | EPOLLHUP))
           //DEBUGLOG("fd %d trigger EPOLLERROR/EPOLLHUP event", fd_event->getFd());
-          Delete(fd_event);
-          //if (fd_event->handler(EPOLLERR) != nullptr)
-          addTask(fd_event->handler(EPOLLERR));
-        }
+      //    Delete(fd_event);
+          addTask(fd_event->getCallBack(EPOLLERR));
       }
-    //}
+          // 1. 处理异步任务队列
+      std::queue<std::function<void()>> tmp_tasks;
+      {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_pending_tasks.swap(tmp_tasks);
+      } // 锁的作用域被精确控制，尽早释放
+
+      while (tmp_tasks.empty() == false) {
+        tmp_tasks.front()();
+        tmp_tasks.pop();
+      }
   }
 }
 
@@ -143,12 +132,10 @@ void EventLoop::deleteEpollEvent(FdEvent* event) {
   }
 }
 
-void EventLoop::addTask(const std::function<void()>&cb) {
-  {
+void EventLoop::addTask(std::function<void()> cb) {
     std::unique_lock<std::mutex> lock(m_mutex);
     // 使用 std::move 避免 function 对象的深拷贝
-    m_pending_tasks.push(cb); 
-  }    
+    m_pending_tasks.push(std::move(cb) ); 
 }
 
 }

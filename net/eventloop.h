@@ -35,7 +35,7 @@ public:
   void addEpollEvent(FdEvent* event);
   void deleteEpollEvent(FdEvent* event);
 
-  void addTask(const std::function<void()>&cb);
+  void addTask(std::function<void()> cb);
   void addTimerEvent(TimerEvent event);
     
 private:
@@ -43,19 +43,18 @@ private:
   EventLoop();
   ~EventLoop();
 
-  void initTimer();
   void add(FdEvent* event);
   void modify(FdEvent*event);
   void Delete(FdEvent* event);
 
   const std::thread::id m_thread_id;
   const int m_epoll_fd;
+
+  std::atomic<bool> m_stop_flag {false};
+  std::queue<std::function<void()> > m_pending_tasks;
+  std::mutex m_mutex; 
   WakeUpFdEvent m_wakeup_fd_event;
   Timer m_timer;
-
-  bool m_stop_flag {false};
-  std::queue<std::function<void()> > m_pending_tasks;
-  mutable std::mutex m_mutex; 
 };
 
 }
